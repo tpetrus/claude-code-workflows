@@ -28,6 +28,66 @@ flowchart TD
     R -. "non-blocking findings" .-> F[("Follow-up<br/>backlog")]
 ```
 
+The same flow as plain text, for terminals and editors without Mermaid rendering:
+
+```text
+                         +------------------+
+                         |       TASK       |
+                         +--------+---------+
+                                  |
+                    +-------------v--------------+
+        PLAN        |  ORCHESTRATOR (Opus)       |   <- judgment lives here
+     (narrow top)   |  spec, risk class, task    |
+                    |  DAG, frozen contracts     |
+                    +------+------+------+-------+
+                           |      |      |
+              +------------+      |      +------------+
+              |                   |                   |
+       +------v-------+   +-------v------+   +--------v-------+
+ FAN   | BUILDER      |   | BUILDER      |   | MECHANICAL     |  <- parallel,
+ OUT   | Sonnet       |   | Sonnet       |   | Haiku          |     isolated
+       | own worktree |   | own worktree |   | exact recipe   |     write paths
+       +------+-------+   +-------+------+   +--------+-------+
+              |                   |                   |
+       +------v-------+   +-------v------+   +--------v-------+
+ VERIFY| verifier cmd |   | verifier cmd |   | verifier cmd   |  <- commands decide,
+       | pass / fail  |   | pass / fail  |   | pass / fail    |     not worker claims
+       +------+-------+   +-------+------+   +--------+-------+
+              |                   |                   |
+              +------------+      |      +------------+
+                           |      |      |
+                    +------v------v------v-------+
+        INTEGRATE   |  ORCHESTRATOR merges work, |
+     (narrow again) |  resolves conflicts, runs  |
+                    |  FULL GATES: format, lint, |
+                    |  types, tests, build, scan |
+                    +-------------+--------------+
+                                  |
+                    +-------------v--------------+
+        REVIEW      |  REVIEWER (Sonnet, high)   |   R2+ only; R0/R1 rely
+                    |  tries to falsify the diff |   on the gates
+                    +------+--------------+------+
+                           |              |
+          blocking finding |              | non-blocking findings
+          -> REPAIR, then  |              v
+          review again     |        +-----+-----------+
+                           |        | FOLLOW-UP       |  drained later in
+                           |        | BACKLOG         |  the fast lane
+                           |        +-----------------+
+                    +------v---------------------+
+        DECIDE      |  risk level?               |
+                    +------+--------------+------+
+                           |              |
+                       R0 / R1           R2+
+                           |              |
+                  +--------v----+   +-----v--------------+
+                  | AUTO-MERGE  |   | HUMAN APPROVAL     |
+                  | (gates pass,|   | required before    |
+                  | no protected|   | merge              |
+                  | paths)      |   +--------------------+
+                  +-------------+
+```
+
 Principles, in priority order: **deterministic program > mechanical (Haiku) > builder (Sonnet) > orchestrator (Opus)**. Ambiguity and integration stay with the orchestrator; only bounded, independently verifiable work is parallelized.
 
 ## Cast
