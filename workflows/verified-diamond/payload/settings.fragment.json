@@ -1,0 +1,103 @@
+{
+  "model": "opus",
+  "effortLevel": "medium",
+  "ultracode": false,
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show*)",
+      "Bash(git branch*)"
+    ],
+    "ask": [
+      "Bash(git push*)",
+      "Bash(gh pr merge*)",
+      "Bash(* install *)",
+      "Bash(* add *)",
+      "Bash(* migrate *)",
+      "Bash(* deploy *)",
+      "Bash(terraform *)",
+      "Bash(kubectl *)"
+    ],
+    "deny": [
+      "Read(**/.env*)",
+      "Read(**/*secret*)",
+      "Read(**/*credential*)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.config/gcloud/**)",
+      "Bash(sudo *)",
+      "Bash(git push --force*)",
+      "Bash(git reset --hard*)",
+      "Bash(* destroy *)",
+      "Bash(* drop database*)",
+      "Bash(* truncate *)",
+      "Bash(curl * | *sh*)",
+      "Bash(wget * | *sh*)"
+    ]
+  },
+  "env": {
+    "VERIFIED_DIAMOND_CONFIG": "~/.claude/verified-diamond/routing.json"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/verified-diamond-policy.py pre"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/verified-diamond-policy.py post"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/verified-diamond-policy.py subagent-start"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/verified-diamond-policy.py subagent-stop"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/verified-diamond-policy.py stop"
+          }
+        ]
+      }
+    ]
+  }
+}

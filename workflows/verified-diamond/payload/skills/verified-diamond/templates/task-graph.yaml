@@ -1,0 +1,27 @@
+task_id: example
+objective: ""
+base_revision: ""
+risk: R1
+contracts: []
+commands:
+  format: ""
+  lint: ""
+  typecheck: ""
+  unit: ""
+  integration: ""
+  build: ""
+  security: ""
+  affected: ""
+tasks:
+  - id: T1
+    role: builder
+    title: ""
+    dependencies: []
+    inputs: []
+    owned_paths: []
+    forbidden_paths: []
+    acceptance: []
+    verify: ""
+    expected_output: ""
+    retry_budget: 2
+    escalate_when: []

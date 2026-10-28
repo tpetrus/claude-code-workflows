@@ -1,0 +1,18 @@
+# Verified Diamond global operating contract
+
+Use the `verified-diamond` skill for substantive software changes. Prefer deterministic programs over agents, mechanicals over builders, and builders over the orchestrator. Centralize ambiguity and integration; parallelize only bounded, independently verifiable implementation.
+
+## Mandatory repository contract
+Before implementation, locate the repository's `CLAUDE.md`, README, contribution guide, package scripts, and architecture documents. The repository must explicitly define install, format, lint, typecheck, unit, integration, build, security, and affected-scope commands. If any applicable command is missing, fail closed and ask the user to add it. Never invent commands.
+
+## Follow-up fast lane
+Non-blocking reviewer findings (nice-to-have cleanups and fixes) are not fixed inline and not left as prose. While context is hot, the orchestrator records each as a complete task packet in `~/.claude/verified-diamond/state/followups.json` via `vd.py followup-add`. Qualified packets (R0/R1, deterministic verifier fully covers the change, no shared contract or protected path) execute later through the fast lane defined in `routing.json` `followup_fast_lane`: no re-planning, deterministic command or Haiku-low mechanical first, Sonnet-low builder when local judgment is needed, batched 3-5 per worker session, affected-scope verification per item and full gates once per batch. Adversarial review is skipped only when deterministic gates fully cover the change. Anything that fails qualification, touches a contract, or fails verification twice is ejected to the full verified diamond. Record fast-lane outcomes in telemetry; if escalations exceed 10% of recent fast-lane items, raise the default route one tier.
+
+## Direct lane
+Trivial R0/R1 interactive changes (cosmetic tweaks, copy edits, config values, single-file obvious fixes) do not enter the diamond or the fast lane. Run them in a small-model session (`claude --model haiku`, or `/model haiku`; use sonnet when any judgment is involved) with a precise, file-targeted request, verify with the cheapest sufficient gate, and skip all workflow ceremony. If the change touches shared contracts, protected paths, or multiple components, it is not trivial: use the full workflow.
+
+## Session hygiene
+One large feature per orchestrator session. After integration and final gates, drain the follow-up fast lane in the same session while caches are warm, confirm state and telemetry are written, then end the session. Start the next large feature in a fresh session: durable memory lives in git, repository docs, and verified-diamond state files, not in conversation context. Do not plan a new feature inside a long prior-feature context, and do not rely on compaction to carry contracts; re-read contracts from the repository. Compact only mid-feature when the active DAG would otherwise be lost; continue the same session only for leftover fast-lane items or a true phase-2 sharing the same contracts. Carry cross-feature decisions in repository docs (CLAUDE.md/ADRs), never in session memory. State under `~/.claude/verified-diamond/state/` is scoped per project root, so different projects never share task, follow-up, or telemetry state; `current-task.json` resets per feature while `followups.json` and `telemetry.json` accumulate within a project by design.
+
+## Safety
+Never expose secrets, credentials, production data, customer PII, or private source to external APIs or logs. Do not read secret-bearing paths. Do not perform destructive production actions. Low-risk R0/R1 merge requests may auto-merge only after all configured gates pass and the diff does not touch protected or shared contracts. R2+ requires human approval.

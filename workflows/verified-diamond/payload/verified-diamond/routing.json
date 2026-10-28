@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "profile": "quality-cost-balanced-subscription",
+  "parallelism": {
+    "max_builders": 3,
+    "max_mechanicals": 4,
+    "max_total_subagents": 5,
+    "reason": "Limits context duplication and subscription usage while preserving useful concurrency."
+  },
+  "models": {
+    "orchestrator": {
+      "model": "opus",
+      "effort": "medium",
+      "escalate_effort": "high",
+      "max_effort_only_for": [
+        "unresolved security design",
+        "cross-service data integrity",
+        "failed plan twice"
+      ]
+    },
+    "builder": {
+      "model": "sonnet",
+      "effort": "medium",
+      "escalate_effort": "high",
+      "escalate_to_model": "opus"
+    },
+    "mechanical": {
+      "model": "haiku",
+      "effort": "low",
+      "escalate_effort": "medium",
+      "escalate_to_model": "sonnet"
+    },
+    "reviewer": {
+      "model": "sonnet",
+      "effort": "high",
+      "escalate_to_model": "opus",
+      "escalate_effort": "high"
+    }
+  },
+  "routing_rules": [
+    {
+      "when": "deterministic command can do the work",
+      "route": "program",
+      "model": null
+    },
+    {
+      "when": "procedural, narrow, reversible, strong verifier",
+      "route": "mechanical"
+    },
+    {
+      "when": "bounded implementation, stable contract, local judgment",
+      "route": "builder"
+    },
+    {
+      "when": "ambiguous architecture, shared contract, integration, high-risk repair",
+      "route": "orchestrator"
+    }
+  ],
+  "risk": {
+    "R0": "docs or cosmetic",
+    "R1": "isolated code",
+    "R2": "API/shared package/cache/queue",
+    "R3": "auth/schema/payments/infrastructure",
+    "R4": "production mutation/destructive/secret policy"
+  },
+  "approval": {
+    "auto_merge": [
+      "R0",
+      "R1"
+    ],
+    "human_merge": [
+      "R2",
+      "R3",
+      "R4"
+    ],
+    "always_human": [
+      "destructive action",
+      "production mutation",
+      "security boundary",
+      "irreversible migration",
+      "ambiguous architecture"
+    ]
+  },
+  "budgets": {
+    "plan_revisions": 2,
+    "worker_retries": 2,
+    "repair_cycles": 2,
+    "max_files_per_worker": 20,
+    "max_shared_write_paths": 0
+  },
+  "followup_fast_lane": {
+    "purpose": "Cheap, dependable execution of non-blocking cleanups captured as complete task packets during review/integration. Quality is guaranteed by deterministic gates and fail-closed qualification, not model horsepower.",
+    "qualify": [
+      "risk is R0 or R1",
+      "complete pre-built task packet exists in state/followups.json",
+      "deterministic verifier fully covers the change",
+      "no shared contract, protected path, dependency, CI, auth, or schema change"
+    ],
+    "disqualified_action": "eject to the full verified-diamond workflow",
+    "routes": {
+      "mechanical": {
+        "model": "haiku",
+        "effort": "low",
+        "escalate_effort": "medium"
+      },
+      "builder": {
+        "model": "sonnet",
+        "effort": "low",
+        "escalate_effort": "medium"
+      },
+      "reviewer": {
+        "policy": "skip when deterministic gates fully cover the change; otherwise diff-only scoped review",
+        "model": "sonnet",
+        "effort": "medium"
+      }
+    },
+    "batching": {
+      "batch_size": "3-5 items grouped by ownership area",
+      "one_worker_session_per_batch": true,
+      "verification": "affected-scope checks per item; full configured gates once per batch",
+      "drain_hint": "prefer draining immediately after the main run while context caches are warm"
+    },
+    "deterministic_first": "if a formatter, lint --fix, codemod, or generator covers the item, the packet procedure is that command plus verification; route to mechanical",
+    "telemetry_calibration": "record lane/worker_class/model/effort/retries/escalated/outcome per item; if more than 10% of the trailing 20 fast-lane items escalate, raise the default fast-lane builder effort to medium and investigate"
+  },
+  "privacy": {
+    "external_network_default": "ask",
+    "never_send": [
+      "secrets",
+      "credentials",
+      "production data",
+      "customer PII",
+      "private keys"
+    ],
+    "logs": "metadata only; redact command arguments and output by default"
+  }
+}

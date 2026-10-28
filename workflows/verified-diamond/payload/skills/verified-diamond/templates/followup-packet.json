@@ -1,0 +1,25 @@
+{
+  "id": "F1",
+  "lane": "fast",
+  "origin": {
+    "task_id": "",
+    "finding": "",
+    "severity": "low"
+  },
+  "objective": "",
+  "worker_class": "mechanical",
+  "deterministic_procedure": "",
+  "base_revision": "",
+  "owned_paths": [],
+  "forbidden_paths": [],
+  "acceptance": [],
+  "verify": [],
+  "risk": "R0",
+  "retry_limit": 1,
+  "status": "pending",
+  "escalation": [
+    "verification fails twice: eject to full verified diamond",
+    "touches shared contract or protected path: eject to full verified diamond",
+    "packet incomplete or verifier missing: eject to full verified diamond"
+  ]
+}
