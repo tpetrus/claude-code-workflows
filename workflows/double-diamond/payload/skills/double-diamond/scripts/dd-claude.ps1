@@ -47,7 +47,10 @@ if ($planScript -match '[^\x20-\x7e]|[`$%^|"]') {
 
 # 3. Guard self-test: the guard must deny a write outside the runs folder, or the Claude Code hooks would let writes through.
 $probe = '{"session_id":"dd-selftest","tool_input":{"file_path":"/dd-selftest/outside.txt"}}'
+# Windows PowerShell 5.1 turns native stderr into a terminating error under Stop, so relax it for the probe (the guard writes its reason to stderr).
+$ErrorActionPreference = 'Continue'
 $verdict = try { "$($probe | & python3 $guard plan 2>$null)" } catch { '' }
+$ErrorActionPreference = 'Stop'
 if ($verdict -notmatch '"permissionDecision":\s*"deny"') {
   Stop-Launch 'the write guard did not run with python3, the Claude Code hooks would let writes through; on Windows `python3` may be the Microsoft Store stub (Settings > Apps > Advanced app settings > App execution aliases), so install a real python3 and try again'
 }
@@ -62,7 +65,7 @@ New-Item -ItemType Directory -Force -Path $runsRoot | Out-Null
 $configDir = if ($env:CLAUDE_CONFIG_DIR) { $env:CLAUDE_CONFIG_DIR } else { Join-Path $homeDir '.claude' }
 $userMd = Join-Path $configDir 'CLAUDE.md'
 $userRules = "$configDir/rules/**"
-$excludes = @(($userMd -replace '\', '/'), ($userMd -replace '/', '\'), ($userRules -replace '\', '/'), ($userRules -replace '/', '\'))
+$excludes = @($userMd.Replace('\', '/'), $userMd.Replace('/', '\'), $userRules.Replace('\', '/'), $userRules.Replace('/', '\'))
 $settings = Join-Path $runsRoot "dd-launch-$PID.settings.json"
 $json = @{ autoMemoryEnabled = $false; claudeMdExcludes = $excludes } | ConvertTo-Json -Compress
 [System.IO.File]::WriteAllText($settings, $json, (New-Object System.Text.UTF8Encoding($false)))

@@ -18,7 +18,7 @@ ALLOW = ("allow", "double-diamond guard: allowed")
 
 def stored_key(folder):
     try:
-        with open(os.path.join(folder, "plan.json"), "rb") as f: plan, _ = parse_json(f.read().decode("utf-8", "replace"))
+        with open(os.path.join(folder, "plan.json"), "rb") as f: plan, _ = parse_json(f.read().decode("utf-8-sig", "replace"))  # tolerate a BOM from PowerShell pipes
     except OSError: return ""
     key = get(plan, "run", "session_key")
     return "" if key is None else js(key)
@@ -64,7 +64,7 @@ def decide(mode, raw):
 
 
 def main(argv):
-    try: decision, reason = decide(argv[1] if len(argv) > 1 else None, sys.stdin.buffer.read().decode("utf-8", "replace"))
+    try: decision, reason = decide(argv[1] if len(argv) > 1 else None, sys.stdin.buffer.read().decode("utf-8-sig", "replace"))
     except Exception as e: decision, reason = "deny", f"guard error: {e}"
     if decision == "deny":
         reason = f"double-diamond guard: {reason}"

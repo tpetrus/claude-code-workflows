@@ -3,7 +3,7 @@
   "name": "double-diamond-claude-code",
   "harness": "claude-code",
   "version": "2.0.0",
-  "generated": "2026-10-30T20:44:06.005Z",
+  "generated": "2026-10-30T21:06:31.260Z",
   "files": [
     {
       "path": "agents/dd-critic.md",
@@ -43,7 +43,7 @@
     },
     {
       "path": "skills/double-diamond/scripts/dd-claude.ps1",
-      "sha256": "18ec98dbb2673421559a457e43fd395074510ab381af01cdcb17670fa16448d2"
+      "sha256": "545df07cb459e03a00c890b2b1c08c4054e04203dc8a268c8c2ae2dc5c4cc79a"
     },
     {
       "path": "skills/double-diamond/scripts/dd-claude.sh",
@@ -55,7 +55,7 @@
     },
     {
       "path": "skills/double-diamond/scripts/guard_write.py",
-      "sha256": "e3197d27864c25c573d5cc4beacebfd186ea997e465324f071995b10ba88c8bb"
+      "sha256": "a3646197cbb82d6d890ac437ba4d4e64ffd59c3a2b7cbaf72ccfeed5d414dd8b"
     },
     {
       "path": "skills/double-diamond/scripts/plan_core.py",
