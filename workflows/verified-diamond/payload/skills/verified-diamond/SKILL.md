@@ -9,11 +9,20 @@ effort: medium
 ## Entry gate
 1. Read `~/.claude/verified-diamond/routing.json`.
 2. Read repo guidance and discover real verification commands.
-3. Run `python3 ~/.claude/scripts/vd.py init --title "$ARGUMENTS"`.
+3. If `$ARGUMENTS` starts with `--plan "<path>"`, follow Plan intake below; the rest of the arguments is the feature title. Run `python3 ~/.claude/scripts/vd.py init --title "<title>"` (without the `--plan` part).
 4. Fail closed if applicable commands are not explicitly documented.
 
 ## Flow
 INTAKE -> DISCOVER -> SPECIFY -> PLAN -> APPROVAL? -> EXECUTE_DAG -> INTEGRATE -> REVIEW -> REPAIR -> FINAL_GATE -> MERGE_DECISION.
+
+## Plan intake (`--plan`)
+Optional input from the double-diamond workflow: an exported `<slug>.plan.json` of settled requirements. Without `--plan`, nothing here applies.
+1. Run `python3 ~/.claude/skills/double-diamond/scripts/dd_plan.py verify "<path>"`. If double-diamond is not installed, the command fails, or it does not print `VERIFIED`, stop and report; never edit the plan file.
+2. Compare `handoff.verified_diamond.base_revision` with `git rev-parse HEAD`. If they differ, tell the user which files changed since planning and ask whether to proceed.
+3. Adopt the plan's acceptance criteria and settled decisions as the spec; do not re-brainstorm them. If the plan conflicts with the repository, stop and ask.
+4. Freeze every contract in `freeze_first` before dispatching any worker.
+5. Refine `draft_dag` using `templates/task-template.json` (same keys). `owned_paths` are drafts: re-verify against the current tree. Fill `verify` from the repository command contract, never from the plan. The risk class from this workflow is authoritative and may only be raised.
+6. Record each task with `vd.py add-task`, mapping `worker_class` to `role` and `objective` to `title`; carry the remaining fields as extras. `vd.py` itself is unchanged.
 
 ## Decomposition score
 Delegate only when the task has a stable contract, disjoint write surface, sufficient context, a local verifier, and meaningful critical-path reduction. Keep ambiguous design, shared contracts, and integration with the orchestrator.

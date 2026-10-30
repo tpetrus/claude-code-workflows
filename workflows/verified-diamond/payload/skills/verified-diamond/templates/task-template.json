@@ -1,0 +1,15 @@
+{
+  "id": "",
+  "objective": "",
+  "dependencies": [],
+  "base_revision": "",
+  "worker_class": "builder",
+  "owned_paths": [],
+  "forbidden_paths": [],
+  "contracts": [],
+  "acceptance": [],
+  "verify": [],
+  "risk": "R1",
+  "retry_limit": 1,
+  "escalation": []
+}

@@ -4,7 +4,10 @@
 Set-StrictMode -Version Latest
 
 function Get-FileSha256([string]$Path) {
-  return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+  # .NET instead of Get-FileHash: Windows PowerShell 5.1's Get-FileHash honors -WhatIf and returns nothing.
+  $sha = [System.Security.Cryptography.SHA256]::Create()
+  try { return ([System.BitConverter]::ToString($sha.ComputeHash([System.IO.File]::ReadAllBytes($Path))) -replace '-', '').ToLowerInvariant() }
+  finally { $sha.Dispose() }
 }
 
 function Get-PackageManifest([string]$Root) {

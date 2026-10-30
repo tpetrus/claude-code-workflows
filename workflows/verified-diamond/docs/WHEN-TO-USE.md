@@ -49,6 +49,7 @@ Escalate blocking, uncertain findings to Opus high. Non-blocking medium/low find
 | `scripts/vd.py init / add-task / ready / result / approve / status` | Orchestrator records and tracks the DAG for the current feature. |
 | `scripts/vd.py followup-add / followup-ready / followup-result` | Capture non-blocking findings as packets; list and resolve them during a fast-lane drain. |
 | `skills/verified-diamond/templates/task-graph.yaml` | Template for a feature's task graph. |
+| `skills/verified-diamond/templates/task-template.json` | Task shape for `--plan` intake from double-diamond; keys match its `draft_dag`. |
 | `skills/verified-diamond/templates/followup-packet.json` | Template for a fast-lane follow-up packet. |
 
 ## Lanes at a glance

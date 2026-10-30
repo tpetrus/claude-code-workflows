@@ -107,7 +107,7 @@ The installer:
 
 If `~/.claude/skills/double-diamond` is a link (junction or symbolic link), the installer refuses to write through it and replaces the link only with `-Force`. The link's target is never touched.
 
-PowerShell 7 (`pwsh`) is required. Windows PowerShell 5.1 fails `-WhatIf` (`Get-FileHash` honors it and returns nothing).
+The installer runs in Windows PowerShell 5.1 or PowerShell 7 (`pwsh`). Replace `pwsh` with `powershell.exe` in the install commands if you only have 5.1. The launcher examples below use `pwsh`.
 
 Nothing needs adding to `settings.json`: the launcher grants access to the run folder itself.
 

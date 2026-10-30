@@ -47,7 +47,7 @@ What the installer does, and doesn't do:
 
 ### Installing double-diamond
 
-`double-diamond` has its own PowerShell installer (it needs `pwsh` 7, Python 3.9+ and Claude Code). `install.py` points you to it instead of installing it.
+`double-diamond` has its own PowerShell installer (Windows PowerShell 5.1 or `pwsh` 7, Python 3.9+ and Claude Code). `install.py` points you to it instead of installing it.
 
 ```powershell
 pwsh -NoProfile -File workflows/double-diamond/install.ps1 -WhatIf   # preview
