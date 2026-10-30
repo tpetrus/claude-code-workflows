@@ -123,6 +123,9 @@ def install(name, args):
     wf = os.path.join(WORKFLOWS, name)
     if not os.path.isdir(os.path.join(wf, "payload")):
         sys.exit(f"unknown workflow: {name} (try --list)")
+    own = os.path.join(wf, "install.ps1")
+    if os.path.exists(own):
+        sys.exit(f"'{name}' ships its own installer; see {os.path.join(wf, 'README.md')} (run {own} with pwsh)")
     target = os.path.expanduser(args.target)
     log(f"{'[dry run] ' if args.dry_run else ''}Installing '{name}' into {target}")
     stats = dict(written=0, unchanged=0, skipped=0)

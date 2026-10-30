@@ -1,0 +1,65 @@
+{
+  "kind": "double-diamond-package",
+  "name": "double-diamond-claude-code",
+  "harness": "claude-code",
+  "version": "2.0.0",
+  "generated": "2026-10-30T20:44:06.005Z",
+  "files": [
+    {
+      "path": "agents/dd-critic.md",
+      "sha256": "8b0fef53f2446bc7f5922cf97276fa05b9349c7cbffb5b047bf0d602c77c7031"
+    },
+    {
+      "path": "agents/dd-ideator.md",
+      "sha256": "f352ea2c40383874a96e48323747a22e6985a14c706bae35fa3f312716954be0"
+    },
+    {
+      "path": "agents/dd-planner-high.md",
+      "sha256": "c83262db298413a25aa443b4493de828957f265fdd5828bb9a12a0f6d86a3275"
+    },
+    {
+      "path": "agents/dd-planner.md",
+      "sha256": "9f5e8f33ceac9c1ce90bf39be7ad49b35218691eda8ab8812fa62ac9fde3ef9f"
+    },
+    {
+      "path": "agents/dd-scout.md",
+      "sha256": "857877c1c654493db40b22b6a6ddbec1a4f2b196247bcf26ad3808bccab95c72"
+    },
+    {
+      "path": "skills/double-diamond/SKILL.md",
+      "sha256": "31a36d0a1e233e6b642ddee75727f05b7323f8966eaaf252a6f055b81c63cf8e"
+    },
+    {
+      "path": "skills/double-diamond/assets/plan.template.json",
+      "sha256": "2918a3c1843dfde4b7753d29c452d862ac378f56c05d3efe254449bbbfcc8814"
+    },
+    {
+      "path": "skills/double-diamond/references/plan-schema.md",
+      "sha256": "6e851c61e6c25af453e9561b098d1572b5733f9bd846b113081170f2ce5ada38"
+    },
+    {
+      "path": "skills/double-diamond/references/verified-diamond-handoff.md",
+      "sha256": "87d3589a019588292e2947bb768bb0ddb80ddcbdcc48a0ff86992c5b6390fdc4"
+    },
+    {
+      "path": "skills/double-diamond/scripts/dd-claude.ps1",
+      "sha256": "18ec98dbb2673421559a457e43fd395074510ab381af01cdcb17670fa16448d2"
+    },
+    {
+      "path": "skills/double-diamond/scripts/dd-claude.sh",
+      "sha256": "44160969528a2c84bc76632c23b3da06ea7312b8530db677da159c574ea19fcb"
+    },
+    {
+      "path": "skills/double-diamond/scripts/dd_plan.py",
+      "sha256": "d73978a60621cebfaaca78b533606c09d14abd8e2a969f49b31a2c0c6592ae8e"
+    },
+    {
+      "path": "skills/double-diamond/scripts/guard_write.py",
+      "sha256": "e3197d27864c25c573d5cc4beacebfd186ea997e465324f071995b10ba88c8bb"
+    },
+    {
+      "path": "skills/double-diamond/scripts/plan_core.py",
+      "sha256": "e2d50586285ff901f4cea45b122016c369561679097d87e92d9dec686cbcbe5a"
+    }
+  ]
+}
