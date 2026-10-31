@@ -1,0 +1,83 @@
+{
+  "schema_version": 2,
+  "kind": "double-diamond-plan",
+  "run_id": "",
+  "revision": 1,
+  "status": "draft",
+  "lane": "full",
+  "risk": "R1",
+  "created": "",
+  "updated": "",
+  "feature": {
+    "slug": "",
+    "title": "",
+    "request": ""
+  },
+  "project": {
+    "name": "",
+    "is_git": false,
+    "base_revision": ""
+  },
+  "problem": {
+    "statement": "",
+    "users": [],
+    "evidence": []
+  },
+  "goals": [],
+  "non_goals": [],
+  "success_metrics": [],
+  "constraints": [],
+  "acceptance_criteria": [],
+  "decisions": [],
+  "scoring": {
+    "weights": {}
+  },
+  "options": [],
+  "dropped_options": [],
+  "chosen_option": "",
+  "decision_rationale": "",
+  "design": {
+    "overview": "",
+    "components": [],
+    "contracts": [],
+    "data": "",
+    "ux": "",
+    "accessibility": "",
+    "security_privacy": "",
+    "observability": "",
+    "rollout": ""
+  },
+  "test_strategy": {
+    "unit": "",
+    "integration": "",
+    "e2e": "",
+    "manual": "",
+    "non_functional": ""
+  },
+  "risks": [],
+  "slices": [],
+  "open_questions": [],
+  "critic": {
+    "passes": 0,
+    "verdict": "",
+    "findings": []
+  },
+  "evidence": {
+    "brief_sha256": "",
+    "cards": {},
+    "critic_sha256": "",
+    "critic_basis": {
+      "chosen_option": "",
+      "risk": "",
+      "contracts_sha256": "",
+      "acs_sha256": ""
+    }
+  },
+  "handoff": {},
+  "run": {
+    "harness": "",
+    "session_key": "",
+    "question_rounds": 0,
+    "lane_changes": []
+  }
+}

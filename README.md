@@ -6,6 +6,7 @@ Each workflow lives in `workflows/<name>/` and is self-contained. More will be a
 
 | Workflow | What it does |
 |---|---|
+| [`double-diamond`](workflows/double-diamond/README.md) | Feature **planning**: Discover → Define → Develop → Deliver. Opus decides, Haiku/Sonnet gather and draft, a deterministic gate validates. Exports a plan that `verified-diamond` can consume. |
 | [`verified-diamond`](workflows/verified-diamond/README.md) | Cost-aware plan → parallel build → deterministic verify → adversarial review → risk-based merge. Opus plans, Sonnet/Haiku build, commands decide pass/fail. |
 
 ```text
@@ -43,6 +44,17 @@ What the installer does, and doesn't do:
 - Leaves your `model` / `effortLevel` alone unless you pass `--set-model`.
 - `--target DIR` installs somewhere other than `~/.claude` (handy for testing).
 - Safe to re-run; unchanged files are left alone. To uninstall, delete the files listed in the workflow README and the marked block in `CLAUDE.md`.
+
+### Installing double-diamond
+
+`double-diamond` has its own PowerShell installer (Windows PowerShell 5.1 or `pwsh` 7, Python 3.9+ and Claude Code). `install.py` points you to it instead of installing it.
+
+```powershell
+pwsh -NoProfile -File workflows/double-diamond/install.ps1 -WhatIf   # preview
+pwsh -NoProfile -File workflows/double-diamond/install.ps1           # install into ~/.claude
+```
+
+Start planning with its launcher, then hand the exported plan to verified-diamond in a fresh session. Details: [`workflows/double-diamond/README.md`](workflows/double-diamond/README.md).
 
 ## Using it on a clean (or any) repository
 
@@ -105,7 +117,7 @@ Install the verified-diamond workflow from <path-or-url-to-this-repo>:
 
 ## Adding a new workflow
 
-1. Create `workflows/<name>/payload/` using the same sub-directories (`agents`, `skills`, `hooks`, `scripts`, plus an optional `<name>/` config dir), and optionally `global-contract.md` and `settings.fragment.json`.
+1. Create `workflows/<name>/payload/` (or ship your own `install.ps1`, as `double-diamond` does) using the same sub-directories (`agents`, `skills`, `hooks`, `scripts`, plus an optional `<name>/` config dir), and optionally `global-contract.md` and `settings.fragment.json`.
 2. Add `workflows/<name>/README.md` explaining the behavior, with diagrams.
 3. `python3 install.py <name> --dry-run` against a scratch `--target` to verify.
 4. Add a row to the table above.
