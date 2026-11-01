@@ -1,15 +1,16 @@
 ---
 name: verified-diamond
-description: Execute a production software task through a cost-aware verified diamond: expensive orchestration, parallel bounded builders/mechanicals, deterministic verification, independent review, and risk-based approval.
+description: Execute a production software task through a cost-aware verified diamond: expensive orchestration, parallel bounded builders/mechanicals, deterministic verification, independent review, and risk-based approval. Start it with `claude --workflow verified-diamond`.
 model: opus
 effort: medium
 ---
 # Verified Diamond
 
 ## Entry gate
+0. This skill runs only in a session started as the `verified-diamond-orchestrator` agent (`claude --workflow verified-diamond`, which runs `claude --agent verified-diamond-orchestrator`). If this session is not that agent, stop before doing anything else and tell the user to restart with `claude --workflow verified-diamond` and run `/verified-diamond <task>` there.
 1. Read `~/.claude/verified-diamond/routing.json`.
 2. Read repo guidance and discover real verification commands.
-3. If `$ARGUMENTS` starts with `--plan "<path>"`, follow Plan intake below; the rest of the arguments is the feature title. Run `python3 ~/.claude/scripts/vd.py init --title "<title>"` (without the `--plan` part).
+3. If `$ARGUMENTS` starts with `--plan "<path>"`, follow Plan intake below; the rest of the arguments is the feature title. Run `python3 ~/.claude/skills/verified-diamond/scripts/vd.py init --title "<title>"` (without the `--plan` part).
 4. Fail closed if applicable commands are not explicitly documented.
 
 ## Flow
@@ -21,7 +22,7 @@ Optional input from the double-diamond workflow: an exported `<slug>.plan.json` 
 2. Compare `handoff.verified_diamond.base_revision` with `git rev-parse HEAD`. If they differ, tell the user which files changed since planning and ask whether to proceed.
 3. Adopt the plan's acceptance criteria and settled decisions as the spec; do not re-brainstorm them. If the plan conflicts with the repository, stop and ask.
 4. Freeze every contract in `freeze_first` before dispatching any worker.
-5. Refine `draft_dag` using `templates/task-template.json` (same keys). `owned_paths` are drafts: re-verify against the current tree. Fill `verify` from the repository command contract, never from the plan. The risk class from this workflow is authoritative and may only be raised.
+5. Refine `draft_dag` using `assets/task-template.json` (same keys). `owned_paths` are drafts: re-verify against the current tree. Fill `verify` from the repository command contract, never from the plan. The risk class from this workflow is authoritative and may only be raised.
 6. Record each task with `vd.py add-task`, mapping `worker_class` to `role` and `objective` to `title`; carry the remaining fields as extras. `vd.py` itself is unchanged.
 
 ## Decomposition score

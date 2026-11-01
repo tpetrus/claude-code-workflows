@@ -1,4 +1,4 @@
-"""End-to-end smoke test for the double-diamond payload: python3 tools/smoke_test.py (from anywhere).
+"""End-to-end smoke test for the double-diamond payload: python3 tests/smoke_test.py (from anywhere).
 Standard library only; not installed. Runs the source payload with the current interpreter in a throwaway runs root
 (DD_RUNS_ROOT) and a throwaway git repository, so nothing touches the real runs folder, ~/.claude or this repository.
 Covers the write guard (allow, deny, ask, session binding), the patch protocol, collect, the gate, finalize, export,
@@ -110,7 +110,7 @@ def main():
 
         # init
         code, out, err = run_cli({k: v for k, v in env.items() if k != "DD_LAUNCHER"}, repo, "init", "no-launcher", "--title", "x")
-        check("init: warns without the launcher", code == 0 and "not started with dd-claude" in out, out + err)
+        check("init: warns without the launcher", code == 0 and "not started with the launcher" in out, out + err)
         code, out, err = run_cli(env, repo, "init", "Bad_Slug")
         check("init: rejects a bad slug", code == 2, out + err)
         code, out, err = run_cli(env, repo, "init", "export-button", "--title", "Export button", "--lane", "full", "--risk", "R2")

@@ -1,5 +1,5 @@
 ---
-name: dd-critic
+name: double-diamond-critic
 description: Double-diamond critic. Independent adversarial pre-mortem of a feature plan that finds why it would fail, grounded in the plan and repository. Read-only except its own report. Launched by the double-diamond planner.
 tools: Read, Grep, Glob, Write
 model: sonnet

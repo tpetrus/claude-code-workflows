@@ -1,0 +1,31 @@
+{
+  "name": "verified-diamond",
+  "version": "1.1.0",
+  "summary": "Build a change: Opus plans, cheaper models build in parallel, real commands decide pass/fail, a reviewer tries to break it, and risk decides who approves the merge.",
+  "orchestrator": "verified-diamond-orchestrator",
+  "skill": "verified-diamond",
+  "usage": [
+    "claude --workflow verified-diamond",
+    "then, in the session: /verified-diamond <task>"
+  ],
+  "launch": {
+    "agent": "verified-diamond-orchestrator"
+  },
+  "requires": ["claude", "python3"],
+  "legacy_files": {
+    "agents/builder.md": "d865031a39ee512095414a6af911418568302a6c6b1109696ede0b2ef67a478b",
+    "agents/explorer.md": "44ceb586a6dbdf62e8fa3c7cbb73372ac05dd98856b97752c0b3656c5758202f",
+    "agents/mechanical.md": "2531156ceb64066c36aab6848920f2dd9f3c01daa410e1d7297c0134ba8028b1",
+    "agents/orchestrator.md": "022b7f66b3bc653740b1d91ad9b5b558c0af7fe48af900b40aad0cc1f64abdc3",
+    "agents/reviewer.md": "fa81dfed276d4bfd14fe3891220ab308fc4ab162dc78900ad7ac2b58c3dcf811",
+    "scripts/vd.py": "516c482a144201409947255297961c6010db3e8871d487f9ba5c8e46e24eaf82",
+    "skills/verified-diamond/templates/followup-packet.json": "49c5c8b93ea7083701b3981e83258066c314e755e28bfcc88f729900a7698d8c",
+    "skills/verified-diamond/templates/task-graph.yaml": "0acd7bc875fbf60a786f2c92e660316a2324a374117f3316d2b9751ac8e9b454",
+    "skills/verified-diamond/templates/task-template.json": "46d175f30f754cc2646e53109e41b91d8df6712cbba797f573d503a081206678",
+    "MANIFEST.json": "8efdeb8b0da7d56e577f8e1c9b0382250719241f1c3e837c119b61303439752a",
+    "README.md": "402605a54fb5f46d4324cb973857fabc5651a968a63b8504aaa9facd30539d6e",
+    "WHEN-TO-USE.md": "b9db69e3533546841753d0e5d9f17f8de05c4e4f3c27fab0e99c804473d11355",
+    "model-economics.md": "89607cb28fccd6e1b793658047c9c939a32de6bfc407e63e9aa93c8f7670b460",
+    "evaluation/README.md": "03df691a778f62428fc3354f4bbb2f76364665898da77a4d02b0328184054309"
+  }
+}

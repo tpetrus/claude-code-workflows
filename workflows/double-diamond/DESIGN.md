@@ -1,11 +1,11 @@
 # double-diamond 2.0 design contract
 
-Frozen contract for `double-diamond-claude-code`, a standalone Claude Code planning workflow. Code, prompts and `tools/smoke_test.py` implement it exactly.
+Frozen contract for `double-diamond-claude-code`, a standalone Claude Code planning workflow. Code, prompts and `tests/smoke_test.py` implement it exactly.
 
 ## Implementation
 - Python 3.9+, standard library only; the plan script, the hooks and the launcher self-test run with `python3`.
-- Payload scripts: `dd_plan.py` (CLI), `plan_core.py` (pure logic), `guard_write.py` (PreToolUse hook), `dd-claude.ps1` and `dd-claude.sh` (launchers).
-- Maintainer tools (not installed): `tools/update_manifest.py` regenerates the manifest; `tools/smoke_test.py` checks the guard, CLI and gate end to end.
+- Payload scripts: `dd_plan.py` (CLI), `plan_core.py` (pure logic), `guard_write.py` (PreToolUse hook), `launch.ps1` and `launch.sh` (launchers, started by `claude --workflow double-diamond`).
+- Maintainer tools (not installed): the repo-level `tools/update_manifest.py` regenerates the manifest; `tests/smoke_test.py` checks the guard, CLI and gate end to end.
 
 ## 1. Invariants
 1. A run uses only its repository, its own run folder and the current session: no global plan state, memory files, or cross-repo/cross-session lookup.
@@ -13,7 +13,7 @@ Frozen contract for `double-diamond-claude-code`, a standalone Claude Code plann
 3. Nothing reaches the repository except through `export`, after the user agrees.
 4. The lead never edits `plan.json`: it writes `patch.json` and runs `apply`. Each worker writes only its own artifact.
 5. Nothing assumes a language, framework or stack.
-6. Every rule that can be deterministic is enforced in code; the guard and the main CLI path are checked by `tools/smoke_test.py`.
+6. Every rule that can be deterministic is enforced in code; the guard and the main CLI path are checked by `tests/smoke_test.py`.
 
 ## 2. Run workspace
 - **Runs root**: `runs_root() = abspath(DD_RUNS_ROOT)` when set, else `<tempfile.gettempdir()>/double-diamond`. `DD_RUNS_ROOT` is for tests; the launcher, the guard and the CLI all read the same function, so they always agree.
@@ -22,9 +22,9 @@ Frozen contract for `double-diamond-claude-code`, a standalone Claude Code plann
   ```
   plan.json         written only by dd_plan.py
   patch.json        lead's change file; deleted by apply
-  context-brief.md  dd-scout
-  cards/O<n>.json   dd-ideator, one per option
-  critic.json       dd-critic
+  context-brief.md  double-diamond-scout
+  cards/O<n>.json   double-diamond-ideator, one per option
+  critic.json       double-diamond-critic
   PLAN.md           generated
   history/          plan.r<N>.json, PLAN.r<N>.md, critic.r<N>.json
   ```
@@ -104,9 +104,9 @@ Lead-owned (patchable): `feature.title`, `feature.request`, `lane` (only `quick`
 ## 7. Gate (`validate_plan`, schema 2)
 - `schema_version` must be 2.
 - `test_strategy`: at least one of `unit`, `integration`, `e2e`, `manual`, `non_functional` non-empty.
-- Critic required when `lane == "full"` or risk is R2+: `evidence.critic_sha256` non-empty (`critic pre-mortem must run before finalize (run dd-critic, then collect)`).
-- Critic stale (error) when `critic_basis.chosen_option` or `critic_basis.risk` differ from the plan: `critic is stale: the chosen option or risk changed since it ran; re-run dd-critic`. Contracts or AC hash changed: warning `contracts or acceptance criteria changed after the critic ran; re-run dd-critic only if a blocker fix changed them`.
-- Full lane with `project.is_git`: `evidence.brief_sha256` non-empty (`full lane in a repository: run dd-scout, then collect`).
+- Critic required when `lane == "full"` or risk is R2+: `evidence.critic_sha256` non-empty (`critic pre-mortem must run before finalize (run double-diamond-critic, then collect)`).
+- Critic stale (error) when `critic_basis.chosen_option` or `critic_basis.risk` differ from the plan: `critic is stale: the chosen option or risk changed since it ran; re-run double-diamond-critic`. Contracts or AC hash changed: warning `contracts or acceptance criteria changed after the critic ran; re-run double-diamond-critic only if a blocker fix changed them`.
+- Full lane with `project.is_git`: `evidence.brief_sha256` non-empty (`full lane in a repository: run double-diamond-scout, then collect`).
 - Every `source: "ideator"` option needs `evidence.cards[id]`.
 - Credentials: `(sk|pk|rk)-` keys must contain a digit. Generic `api key|secret|password|access token|auth token` assignments must have a value of 24+ characters mixing letters and digits. So `pk-customer-account-lookup-service` and `secret: PAYMENTS_GATEWAY_KEY_VAULT_REF` pass; real key shapes fail.
 - Also: placeholders, quick lane limited to R2, slices and cycles, AC coverage, R2+ risks and rollout, blocking open questions, resolutions for blocker/high findings, warnings (see `references/plan-schema.md`).
@@ -116,14 +116,14 @@ Exit codes: 0 success; 1 gate fail, rejected, refused, not verified or canary fa
 
 | Command | Behavior |
 |---|---|
-| `init <slug> [--title "..."] [--lane quick\|full] [--risk R0-R4]` | Slug must match `FEATURE_SLUG`. Sweep, create `<run>/cards/`, write the plan (template plus `run_id`, feature, lane, risk, project, timestamps, `run.harness = "claude-code"`, `run.session_key`). Print one JSON line: `{"run","plan","patch","brief","cards_dir","critic","canary","verified_diamond_available","warnings"}`. Warning when `DD_LAUNCHER` is not `1`: `not started with dd-claude: write guards and memory isolation are off`. `verified_diamond_available` is true when `~/.claude/skills/verified-diamond/SKILL.md` exists. |
+| `init <slug> [--title "..."] [--lane quick\|full] [--risk R0-R4]` | Slug must match `FEATURE_SLUG`. Sweep, create `<run>/cards/`, write the plan (template plus `run_id`, feature, lane, risk, project, timestamps, `run.harness = "claude-code"`, `run.session_key`). Print one JSON line: `{"run","plan","patch","brief","cards_dir","critic","canary","verified_diamond_available","warnings"}`. Warning when `DD_LAUNCHER` is not `1`: `not started with the launcher (claude --workflow double-diamond): write guards and memory isolation are off`. `verified_diamond_available` is true when `~/.claude/skills/verified-diamond/SKILL.md` exists. |
 | `apply <run>` | Section 5. |
 | `collect <run>` | Section 6. |
 | `validate <run>` | Gate plus `verify_disk`. Prints `ERROR  ...`, `WARN   ...`, then `PASS (...)` or `FAIL (...)`. Exit 1 on errors. Never writes. |
 | `show <run> [section]` | No section: compact text summary (title, slug, revision, status, lane, risk; AC ids; options with lens, total and chosen marker; dropped options; slice ids with dependencies; critic passes, verdict and unresolved finding ids; evidence presence; gate line). With a section: minified JSON of that top-level key, or usage error. |
 | `render <run>` | Write `PLAN.md`, print its path. |
 | `finalize <run>` | Already final: print `ALREADY FINAL r<N>: use revise to change it`, exit 0, no write. Else gate plus `verify_disk`; on errors print them, exit 1, no write. On pass: `handoff = derive_handoff(plan)`, `status = "final"`, write `plan.json` and `PLAN.md`, print the gate line and `{"plan","markdown","revision"}`. |
-| `revise <run>` | Requires `final` (else usage error). Archive `history/plan.r<N>.json`, `history/PLAN.r<N>.md` (if present); copy `critic.json` to `history/critic.r<N>.json` (if present). `revision += 1`, `status = "draft"`, `handoff = {}`, `project.base_revision` from `detect_project()`. If the base revision changed and a brief was collected, print `WARN   the context brief predates the current HEAD; re-run dd-scout if the change matters`. Print `{"plan","revision","archived"}`. |
+| `revise <run>` | Requires `final` (else usage error). Archive `history/plan.r<N>.json`, `history/PLAN.r<N>.md` (if present); copy `critic.json` to `history/critic.r<N>.json` (if present). `revision += 1`, `status = "draft"`, `handoff = {}`, `project.base_revision` from `detect_project()`. If the base revision changed and a brief was collected, print `WARN   the context brief predates the current HEAD; re-run double-diamond-scout if the change matters`. Print `{"plan","revision","archived"}`. |
 | `export <run> --to <dir> [--force]` | Section 9. |
 | `verify <file.json>` | Section 9. Not run-scoped. |
 | `discard <run>` | Remove the run folder and its canary; print `DISCARDED <run_id>`. |
@@ -155,14 +155,14 @@ Exit codes: 0 success; 1 gate fail, rejected, refused, not verified or canary fa
 - **`export` asks**: an allowed bash command whose command name is `export` gets `permissionDecision: "ask"`.
 - **Decision output** (stdout, exit 0): allowed is `{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","permissionDecisionReason":"double-diamond guard: allowed"}}`. Denied is the same shape with `"deny"` and a reason (also written to stderr). A JSON decision is used instead of exit code 2 because a PowerShell wrapper rewrites a native exit 2 to 1, which Claude Code treats as non-blocking.
 
-## 11. Launcher (`scripts/dd-claude.ps1`, `scripts/dd-claude.sh`)
-`pwsh -File dd-claude.ps1 [-High] [extra claude args]` and `dd-claude.sh [--high] [extra args]`; the only supported entry point.
+## 11. Launcher (`scripts/launch.ps1`, `scripts/launch.sh`)
+`claude --workflow double-diamond [--high] [extra claude args]`, which runs `launch.ps1 [-High]` on Windows or `launch.sh [--high]` elsewhere; the only supported entry point.
 1. `python3` and `claude` must be on PATH.
 2. Guard reachability: hooks run `python3 "$HOME/.claude/skills/double-diamond/scripts/guard_write.py"`. Compute `HOME` (PowerShell: `$env:HOME`, else `$env:USERPROFILE`) and require that file to exist; else stop with an explanation. The plan script path must be printable ASCII without `` ` $ % ^ ! | `` or `"`, because the Bash guard refuses those.
 3. Guard self-test: pipe a write outside the runs folder through the guard with `python3`; refuse to start unless it answers `deny` (this also catches the Microsoft Store `python3` alias stub on Windows).
 4. Runs root from `python3 "<scripts>/dd_plan.py" runs-root`; create it (mode 700 on macOS and Linux).
 5. Write `<runs root>/dd-launch-<pid>.settings.json`: `{"autoMemoryEnabled":false,"claudeMdExcludes":[<user CLAUDE.md>, <user rules folder>/**]}`, each in forward-slash and backslash forms. The user CLAUDE.md is `$CLAUDE_CONFIG_DIR/CLAUDE.md`, else `<home>/.claude/CLAUDE.md`.
-6. Set `DD_LAUNCHER=1` and `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` for the child only (restore afterwards), run `claude --agent dd-planner|dd-planner-high --add-dir <runs root> --settings <file> <extra>`, delete the settings file, exit with claude's code.
+6. Set `DD_LAUNCHER=1` and `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` for the child only (restore afterwards), run `claude --agent double-diamond-orchestrator|double-diamond-orchestrator-high --add-dir <runs root> --settings <file> <extra>`, delete the settings file, exit with claude's code.
 
 ## 12. Agents
 **Every agent prompt** contains this precedence line verbatim:
@@ -175,18 +175,18 @@ Exit codes: 0 success; 1 gate fail, rejected, refused, not verified or canary fa
 **Planner prompt** also says: follow the preloaded double-diamond skill; plan only; write only `patch.json`; run only the plan script, exactly as the skill shows; resume only a run created earlier in this conversation and never browse the runs folder; never write memory files; every question to the user goes through AskUserQuestion until `finalize`.
 
 **Frontmatter**:
-- `dd-planner`:
-  - `tools: Read, Grep, Glob, Bash, Write, Edit, Agent(dd-scout, dd-ideator, dd-critic), AskUserQuestion, WebFetch, WebSearch` (no `Skill`; the skill is preloaded);
+- `double-diamond-orchestrator`:
+  - `tools: Read, Grep, Glob, Bash, Write, Edit, Agent(double-diamond-scout, double-diamond-ideator, double-diamond-critic), AskUserQuestion, WebFetch, WebSearch` (no `Skill`; the skill is preloaded);
   - `model: opus`, `effort: medium`, `skills: [double-diamond]`;
   - hooks: matcher `Write|Edit` runs `python3 "$HOME/.claude/skills/double-diamond/scripts/guard_write.py" plan`; matcher `Bash` runs the same with `bash`.
-- `dd-planner-high`: identical except `effort: high` and its description.
+- `double-diamond-orchestrator-high`: identical except `effort: high` and its description.
 - Workers: `tools: Read, Grep, Glob, Write`, `omitClaudeMd: true`, a `Write|Edit` guard hook in their own mode.
-  - `dd-scout`: `model: haiku` (effort not set), `maxTurns: 30`, mode `brief`.
-  - `dd-ideator`: `model: sonnet`, `effort: medium`, `maxTurns: 12`, mode `card`.
-  - `dd-critic`: `model: sonnet`, `effort: high`, `maxTurns: 20`, mode `critic` (a different model from the lead, so the blind spots differ).
+  - `double-diamond-scout`: `model: haiku` (effort not set), `maxTurns: 30`, mode `brief`.
+  - `double-diamond-ideator`: `model: sonnet`, `effort: medium`, `maxTurns: 12`, mode `card`.
+  - `double-diamond-critic`: `model: sonnet`, `effort: high`, `maxTurns: 20`, mode `critic` (a different model from the lead, so the blind spots differ).
 
 ## 13. Skill and docs
-- **SKILL.md frontmatter**: `name: double-diamond`; description of at most 200 characters; `compatibility`; `metadata` with `version: "2.0.0"` and `family: diamond-workflows`. Never `disable-model-invocation` (it would block the planner's `skills:` preload).
+- **SKILL.md frontmatter**: `name: double-diamond`; description of at most 200 characters; `compatibility`; `metadata` with `version: "2.1.0"` and `family: diamond-workflows`. Never `disable-model-invocation` (it would block the planner's `skills:` preload).
 - **SKILL.md body**:
   - fewer than 500 lines (target about 170);
   - contains `at most **4 questions per round**`, `at most **3 rounds**` and `up to 3 attempts`;
@@ -194,14 +194,13 @@ Exit codes: 0 success; 1 gate fail, rejected, refused, not verified or canary fa
 - **Stack-neutral**: no framework or stack names in the skill, references or agent prompts (for example Angular, React, Vue, Rails, Spring Boot, ASP.NET).
 - **End-of-run question round** (one round):
   1. export (suggested folder, custom path, or don't export);
-  2. only when `verified_diamond_available` and final: hand off ("Yes, print the command for a fresh session" or "No"). Requires an export; never automatic. The printed command is `/verified-diamond --plan "<exported plan.json>" <title>`;
+  2. only when `verified_diamond_available` and final: hand off ("Yes, print the command for a fresh session" or "No"). Requires an export; never automatic. The printed instruction is: start `claude --workflow verified-diamond`, then run `/verified-diamond --plan "<exported plan.json>" <title>`;
   3. discard the temp run (recommended after export).
 
 ## 14. Package
-- `tools/update_manifest.py` regenerates `MANIFEST.json` from `payload/`: keeps `kind`, `name`, `harness`, sets `version: "2.0.0"` and `generated`, lists files sorted by path with SHA-256.
-- `lib/Install-Package.ps1` (dot-sourced by `install.ps1`): `Get-PackageManifest`, `Test-PackagePayload` (refuses a payload that does not match the manifest), `Install-PackageFiles` (plans every copy, stops before writing if a target differs unless `-Force`), `Uninstall-PackageFiles` (removes only unchanged files unless `-Force`, then prunes empty folders).
-- `install.ps1` refuses to write through a linked skill folder (junction or symbolic link) and replaces the link only with `-Force`, never touching its target. It warns when `python3` is missing or is the Microsoft Store stub, and when the target is not `~/.claude` (the hooks call `$HOME/.claude/...`).
-- `tools/smoke_test.py` runs against the source payload with the current interpreter, in a temporary runs root (`DD_RUNS_ROOT`) and a temporary git repository. It covers the guard decisions (allow, deny, ask, session binding), the patch protocol, collect, the gate, finalize, export, verify, canary and discard. Run it after every payload change, before regenerating the manifest.
+- Packaged in the shared repository format (see the repository README): `workflow.json` declares the name, version, orchestrator agent, skill and launcher; `MANIFEST.json` lists every payload file with its SHA-256 and is regenerated by the repo-level `tools/update_manifest.py`.
+- The repo-level `install.py` installs and uninstalls it: it refuses a payload that does not match the manifest, plans every copy and stops before writing if a target differs unless `--force`, removes only unchanged files on `--uninstall` unless `--force`, refuses to write through a linked skill folder (junction or symbolic link) and replaces the link only with `--force`, never touching its target. It warns when `python3` is missing or is the Microsoft Store stub, and when the target is not `~/.claude` (the hooks call `$HOME/.claude/...`).
+- `tests/smoke_test.py` runs against the source payload with the current interpreter, in a temporary runs root (`DD_RUNS_ROOT`) and a temporary git repository. It covers the guard decisions (allow, deny, ask, session binding), the patch protocol, collect, the gate, finalize, export, verify, canary and discard. Run it after every payload change, before regenerating the manifest.
 
 ## 15. Open items (verify live before relying on them)
 - Whether the guard's `allow` avoids prompts in background workers; whether `--add-dir` applies to subagents; whether `claudeMdExcludes` via `--settings` excludes the user CLAUDE.md and rules; whether subagent hook payloads carry the parent `session_id` (if they do, bind worker modes too).

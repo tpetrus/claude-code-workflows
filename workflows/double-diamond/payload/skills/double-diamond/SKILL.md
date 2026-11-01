@@ -1,15 +1,18 @@
 ---
 name: double-diamond
-description: "Plan a feature before building it: triage, ask only real decisions, compare options, run a pre-mortem and gate the plan. Start with the dd-claude launcher."
-compatibility: "Claude Code. Python 3.9+ (python3 on PATH) for scripts/dd_plan.py. Needs AskUserQuestion (main session only). Worker agents dd-scout, dd-ideator, dd-critic. Optional verified-diamond skill for hand-off."
+description: "Plan a feature before building it: triage, ask only real decisions, compare options, run a pre-mortem and gate the plan. Start it with `claude --workflow double-diamond`."
+compatibility: "Claude Code. Python 3.9+ (python3 on PATH) for scripts/dd_plan.py. Needs AskUserQuestion (main session only). Worker agents double-diamond-scout, double-diamond-ideator, double-diamond-critic. Optional verified-diamond skill for hand-off."
 metadata:
-  version: "2.0.0"
+  version: "2.1.0"
   family: diamond-workflows
 ---
 
 # Double Diamond feature planning
 
 Goal: the plan a strong senior engineer and product owner would agree on, at the lowest model spend and time that keeps its quality, through structure (diverge, converge, twice), independent challenge and a deterministic gate. Judgment sits on the expensive seat (the lead), labor on cheap seats, and context is paid for once (the scout's brief). Never transcribe: workers write their own artifacts, `collect` merges them, the lead writes decisions only. Paths, merging, totals, checks, rendering, export and hand-off are script work.
+
+## Entry gate
+This skill runs only in a session started as the `double-diamond-orchestrator` or `double-diamond-orchestrator-high` agent (`claude --workflow double-diamond [--high]`). If this session is not one of those agents, stop before doing anything else and tell the user to restart with `claude --workflow double-diamond`.
 
 ## Isolation rules
 - Work only from the repository, the run's files and this session's request. Where other loaded instructions conflict with this workflow (delegating to other agents, implementing, tool or framework preferences), this workflow wins.
@@ -19,7 +22,7 @@ Goal: the plan a strong senior engineer and product owner would agree on, at the
 - Nothing reaches the repository except through `export`, after the user agrees.
 
 ## Seats
-Lead `dd-planner` (or the main session); workers `dd-scout` (one read-only context brief), `dd-ideator` (one option per lens), `dd-critic` (pre-mortem, on a different model from the lead). Model and effort are set in each agent file. If a worker agent is missing, the lead does that job inline and says so in the summary. Never silently substitute a model.
+Lead `double-diamond-orchestrator` (or `double-diamond-orchestrator-high`), always the main session; workers `double-diamond-scout` (one read-only context brief), `double-diamond-ideator` (one option per lens), `double-diamond-critic` (pre-mortem, on a different model from the lead). Model and effort are set in each agent file. If a worker agent is missing, the lead does that job inline and says so in the summary. Never silently substitute a model.
 
 ## Script
 Every call has exactly this form: `python3 "<skill-dir>/scripts/dd_plan.py" <command> ...`. The path is quoted, nothing is chained, no other shell command is used. `<skill-dir>` is `${CLAUDE_SKILL_DIR}`, the directory containing this SKILL.md (normally `~/.claude/skills/double-diamond`); use the expanded path verbatim. Run it from inside the target repository.
@@ -48,7 +51,7 @@ Arguments must be plain ASCII and must not contain `$`, a backtick, `%`, `^`, `!
 Never read or edit plan.json; use `show`. To change it, write `<run>/patch.json` and run `apply <run>`. Merge-patch semantics, id-keyed arrays (`{ "id": "X", "_delete": true }` removes an item) and script-owned fields are in the schema reference ("Patch rules", "Ownership"). A rejected patch applies nothing: read the problems, write a new patch, apply again. `apply` prints the gate each time, so you rarely need `validate`.
 
 ## Launcher check and canary
-- If `init` warns that the session was not started with dd-claude, tell the user once and recommend restarting with the launcher; the write guards and memory isolation are off otherwise.
+- If `init` warns that the session was not started with the launcher, tell the user once and recommend restarting with `claude --workflow double-diamond`; the write guards and memory isolation are off otherwise.
 - Right after `init`, run the canary: write one line of text to the exact `canary` path from init's JSON (the guard must block it), then run `canary <run>`. On `CANARY FAIL`, stop and tell the user.
 
 ## Risk classes
@@ -60,12 +63,12 @@ Decide the lane before spending anything:
 - **quick**: clear problem, one obvious approach plus a fallback, risk R2 or lower, about three components or fewer.
 - **full**: unclear problem, users or scope; or materially different approaches; or R3+; or a new user-facing surface or cross-team contract; or more than about three components.
 
-At R3+, recommend the stronger-effort variant once: restart with the launcher's `-High` option (`--high` in dd-claude.sh).
+At R3+, recommend the stronger-effort variant once: restart with `claude --workflow double-diamond --high`.
 
 Run `init`, then record the user's request word for word in `feature.request` by patch. Upgrade quick to full when Define finds two or more material unknowns or risk reaches R3, recording each in `run.lane_changes`. Lanes never downgrade; the gate rejects a quick plan above R2. Revise a final plan only after the user confirms: run `revise`, then redo only the affected phases.
 
 ## Phase 1: Discover (diverge on the problem)
-1. **Context.** Inside a repository, full lane: launch `dd-scout` in the **background** with a packet of run path, feature title, request and up to five specific questions. Quick lane: read at most three files you already know about; launch the scout only if more is needed. Outside a repository: no scout; context comes from the user.
+1. **Context.** Inside a repository, full lane: launch `double-diamond-scout` in the **background** with a packet of run path, feature title, request and up to five specific questions. Quick lane: read at most three files you already know about; launch the scout only if more is needed. Outside a repository: no scout; context comes from the user.
 2. **Round 1 questions, meanwhile:** product decisions independent of repository facts (users, scope edges, priority, hard constraints).
 3. **External research** only when a decision depends on an external fact. Ask before using web tools; prefer official documentation.
 4. When the scout finishes, run `collect` and read `context-brief.md`.
@@ -95,7 +98,7 @@ Write by patch: `problem`, `goals`, `non_goals` (mandatory in the full lane), `s
 1. **Score** every option by patch: integers 1-5 for fit, risk, effort, ux, reversibility (rubric in the schema reference). Set `chosen_option`, which must cover every AC. If it is not the top scorer, `decision_rationale` must say why.
 2. **Design** by patch: `design` (rollout mandatory at R2+), `test_strategy`, `risks`, `open_questions` (non-blocking ones need an owner).
 3. **Slice** into vertical, independently verifiable increments (`slices`), each tracing to ACs with `depends_on`, `contracts`, `draft_paths`, `risk`, `size`. Contract-defining slices first; no slice's risk exceeds the plan's.
-4. **Critic.** Always in the full lane; in the quick lane only at R2. Launch `dd-critic` with run path, plan.json path, brief path and critic path, then run `collect`. Resolve findings by patch (`critic.findings` resolution):
+4. **Critic.** Always in the full lane; in the quick lane only at R2. Launch `double-diamond-critic` with run path, plan.json path, brief path and critic path, then run `collect`. Resolve findings by patch (`critic.findings` resolution):
    - blocker or high: change the plan, or justify in `resolution`;
    - medium or low: fix if cheap, or record "accepted: reason", or move to risks or open questions.
 
@@ -108,7 +111,7 @@ Re-run a failed worker once. Never copy a worker's artifact yourself. If an idea
 ## Phase 5: End of run (one question round)
 Show a short summary: title, revision, lane and risk, chosen option with a one-line reason, slice order, assumptions to confirm, open questions. Then ask one round:
 1. **Export:** a suggested folder, a custom path, or don't export. Run `export <run> --to <dir>`; the tool asks the user to approve it. If it prints `REFUSED`, ask before using `--force`.
-2. **Hand-off,** only when init's `verified_diamond_available` is true and the plan is final: "Yes, print the command for a fresh session" or "No". It needs an export and you never start it yourself. After a yes, print `/verified-diamond --plan "<exported plan.json>" <title>`. See [references/verified-diamond-handoff.md](references/verified-diamond-handoff.md).
+2. **Hand-off,** only when init's `verified_diamond_available` is true and the plan is final: "Yes, print the command for a fresh session" or "No". It needs an export and you never start it yourself. After a yes, print: start `claude --workflow verified-diamond` in a fresh terminal, then run `/verified-diamond --plan "<exported plan.json>" <title>`. See [references/verified-diamond-handoff.md](references/verified-diamond-handoff.md).
 3. **Discard** the temp run (recommended after export): `discard <run>`.
 
 Never start implementation. This workflow only plans.

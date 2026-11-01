@@ -6,22 +6,25 @@ Starts Claude Code as the double-diamond planner. The only supported Claude Code
 Checks that python3, claude and the installed write guard are reachable, proves the guard denies a write
 outside the runs folder,
 creates the runs folder, writes a per-launch settings file that turns off auto memory and hides the
-user CLAUDE.md and rules, then runs `claude --agent dd-planner` (or dd-planner-high with -High) with
+user CLAUDE.md and rules, then runs `claude --agent double-diamond-orchestrator` (or double-diamond-orchestrator-high with -High) with
 the runs folder added. DD_LAUNCHER and CLAUDE_CODE_DISABLE_AUTO_MEMORY are set for the child only.
 
 .EXAMPLE
-pwsh -File dd-claude.ps1
-pwsh -File dd-claude.ps1 -High --model opus
+pwsh -File launch.ps1
+pwsh -File launch.ps1 -High --model opus
+claude --workflow double-diamond --high   (same, through the workflow launcher)
 #>
 param(
   [switch]$High
 )
+# Accept the POSIX spelling too, so `claude --workflow double-diamond --high` works on every platform.
+if ($args -contains '--high') { $High = $true; $args = @($args | Where-Object { $_ -ne '--high' }) }
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 function Stop-Launch([string]$Message) {
-  [Console]::Error.WriteLine("dd-claude: $Message")
+  [Console]::Error.WriteLine("double-diamond launcher: $Message")
   exit 1
 }
 
@@ -77,7 +80,7 @@ foreach ($name in $names) { $previous[$name] = [Environment]::GetEnvironmentVari
 $code = 1
 try {
   foreach ($name in $names) { [Environment]::SetEnvironmentVariable($name, '1', 'Process') }
-  $agent = if ($High) { 'dd-planner-high' } else { 'dd-planner' }
+  $agent = if ($High) { 'double-diamond-orchestrator-high' } else { 'double-diamond-orchestrator' }
   $claudeArgs = @('--agent', $agent, '--add-dir', $runsRoot, '--settings', $settings) + @($args)
   & claude @claudeArgs
   $code = $LASTEXITCODE

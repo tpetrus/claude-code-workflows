@@ -1,6 +1,6 @@
 # Verified Diamond global operating contract
 
-Use the `verified-diamond` skill for substantive software changes. Prefer deterministic programs over agents, mechanicals over builders, and builders over the orchestrator. Centralize ambiguity and integration; parallelize only bounded, independently verifiable implementation.
+Use the verified-diamond workflow for substantive software changes: start it with `claude --workflow verified-diamond`, then run `/verified-diamond <task>` (the skill requires the `verified-diamond-orchestrator` agent). Prefer deterministic programs over agents, mechanicals over builders, and builders over the orchestrator. Centralize ambiguity and integration; parallelize only bounded, independently verifiable implementation.
 
 ## Mandatory repository contract
 Before implementation, locate the repository's `CLAUDE.md`, README, contribution guide, package scripts, and architecture documents. The repository must explicitly define install, format, lint, typecheck, unit, integration, build, security, and affected-scope commands. If any applicable command is missing, fail closed and ask the user to add it. Never invent commands.

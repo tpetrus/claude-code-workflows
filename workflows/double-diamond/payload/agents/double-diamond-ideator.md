@@ -1,5 +1,5 @@
 ---
-name: dd-ideator
+name: double-diamond-ideator
 description: Double-diamond ideator. Generates one concrete solution option for a planned feature through an assigned lens (minimal, robust, experience, contrarian) and writes it as a card. Launched by the double-diamond planner.
 tools: Read, Grep, Glob, Write
 model: sonnet
