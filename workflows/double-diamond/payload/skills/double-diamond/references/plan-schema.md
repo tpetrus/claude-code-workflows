@@ -3,7 +3,7 @@
 `scripts/dd_plan.py` and `scripts/plan_core.py` define this schema. Template: [../assets/plan.template.json](../assets/plan.template.json). The lead never edits plan.json: it writes `patch.json`, runs `apply` and reads with `show`. PLAN.md is generated.
 
 ## Run folder
-A session-scoped temp folder, `<runs root>/<run_id>/`; `init` prints the paths. Nothing reaches the repository except through `export`, after the user agrees. Contents: `plan.json` (source of truth, written only by dd_plan.py), `patch.json` (the lead's change file, deleted by apply), `context-brief.md` (dd-scout), `cards/<id>.json` (dd-ideator, one per option), `critic.json` (dd-critic), `PLAN.md` (generated), `history/` (plan.r<N>.json, PLAN.r<N>.md, critic.r<N>.json, archived by revise).
+A session-scoped temp folder, `<runs root>/<run_id>/`; `init` prints the paths. Nothing reaches the repository except through `export`, after the user agrees. Contents: `plan.json` (source of truth, written only by dd_plan.py), `patch.json` (the lead's change file, deleted by apply), `context-brief.md` (double-diamond-scout), `cards/<id>.json` (double-diamond-ideator, one per option), `critic.json` (double-diamond-critic), `PLAN.md` (generated), `history/` (plan.r<N>.json, PLAN.r<N>.md, critic.r<N>.json, archived by revise).
 
 ## Fields the lead fills (all lead-owned and patchable)
 | Field | Shape | Gate |
@@ -57,8 +57,8 @@ Id `O1`-`O99`. `collect` merges ideator cards into `options`; a lead-written opt
 ## Gate (`validate`, `apply`, `finalize`)
 - `schema_version` must be 2. A quick-lane plan may not exceed R2.
 - **Arrays** (goals, non_goals, users, evidence, success_metrics, constraints, approach, depends_on, acceptance_refs, contracts, draft_paths, uncovered_acs) must hold non-empty strings. An option with `covers_all_acs: true` may not have `uncovered_acs`.
-- **Critic** required when the lane is full or risk is R2+: `evidence.critic_sha256` must be set (run dd-critic, then `collect`). It is stale (error) when the chosen option or risk changed since it ran; changed contracts or ACs only warn (re-run only if a blocker fix changed them).
-- A full-lane plan in a git repository needs a collected brief (run dd-scout, then `collect`). Every `source: "ideator"` option needs recorded card evidence.
+- **Critic** required when the lane is full or risk is R2+: `evidence.critic_sha256` must be set (run double-diamond-critic, then `collect`). It is stale (error) when the chosen option or risk changed since it ran; changed contracts or ACs only warn (re-run only if a blocker fix changed them).
+- A full-lane plan in a git repository needs a collected brief (run double-diamond-scout, then `collect`). Every `source: "ideator"` option needs recorded card evidence.
 - **Placeholders** fail: `TBD` anywhere, `TODO`/`FIXME` as a leading marker or `TODO:`, `<fill...>`, lorem ipsum.
 - **Credential-shaped strings** fail in lead-authored sections and critic output: private keys, bearer tokens, provider keys, JWTs, URLs with an embedded password. Names such as `pk-customer-account-lookup-service` or `secret: PAYMENTS_GATEWAY_KEY_VAULT_REF` pass, because real keys mix letters and digits. The verbatim `feature.request` is checked only for credentials.
 - **Warnings** (do not fail): planner assumptions, unresolved medium/low findings, a `rethink` verdict, unused contracts, a non-top-scored choice, draft paths that are absolute or contain `..`.

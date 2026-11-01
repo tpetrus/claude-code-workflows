@@ -1,0 +1,74 @@
+{
+  "name": "verified-diamond",
+  "version": "1.1.0",
+  "files": [
+    {
+      "path": "agents/verified-diamond-builder.md",
+      "sha256": "d865031a39ee512095414a6af911418568302a6c6b1109696ede0b2ef67a478b"
+    },
+    {
+      "path": "agents/verified-diamond-explorer.md",
+      "sha256": "44ceb586a6dbdf62e8fa3c7cbb73372ac05dd98856b97752c0b3656c5758202f"
+    },
+    {
+      "path": "agents/verified-diamond-mechanical.md",
+      "sha256": "2531156ceb64066c36aab6848920f2dd9f3c01daa410e1d7297c0134ba8028b1"
+    },
+    {
+      "path": "agents/verified-diamond-orchestrator.md",
+      "sha256": "d38b26ff530712152766999fe59ae20983aca4062b12e92fffb461a99bc30b5c"
+    },
+    {
+      "path": "agents/verified-diamond-reviewer.md",
+      "sha256": "fa81dfed276d4bfd14fe3891220ab308fc4ab162dc78900ad7ac2b58c3dcf811"
+    },
+    {
+      "path": "hooks/verified-diamond-policy.py",
+      "sha256": "7e13cfec7507f098c8ff9a616211434d97ab8c333e2e70c37f009d07b2a1e848"
+    },
+    {
+      "path": "skills/verified-diamond/SKILL.md",
+      "sha256": "b8c15e2f7d3eec2305da5931605451182a5d66272c5235fdcfd350843f3eb8aa"
+    },
+    {
+      "path": "skills/verified-diamond/assets/followup-packet.json",
+      "sha256": "49c5c8b93ea7083701b3981e83258066c314e755e28bfcc88f729900a7698d8c"
+    },
+    {
+      "path": "skills/verified-diamond/assets/task-graph.yaml",
+      "sha256": "0acd7bc875fbf60a786f2c92e660316a2324a374117f3316d2b9751ac8e9b454"
+    },
+    {
+      "path": "skills/verified-diamond/assets/task-template.json",
+      "sha256": "46d175f30f754cc2646e53109e41b91d8df6712cbba797f573d503a081206678"
+    },
+    {
+      "path": "skills/verified-diamond/scripts/vd.py",
+      "sha256": "516c482a144201409947255297961c6010db3e8871d487f9ba5c8e46e24eaf82"
+    },
+    {
+      "path": "verified-diamond/README.md",
+      "sha256": "6287bfc293866f2709725c7c8791e3165a031e486a6e40a9797c23e1669477fc"
+    },
+    {
+      "path": "verified-diamond/docs/WHEN-TO-USE.md",
+      "sha256": "a5610845a9600c375f01c799475a19ccbd777014ad2ed800406874810413323e"
+    },
+    {
+      "path": "verified-diamond/docs/evaluation/README.md",
+      "sha256": "03df691a778f62428fc3354f4bbb2f76364665898da77a4d02b0328184054309"
+    },
+    {
+      "path": "verified-diamond/docs/model-economics.md",
+      "sha256": "89607cb28fccd6e1b793658047c9c939a32de6bfc407e63e9aa93c8f7670b460"
+    },
+    {
+      "path": "verified-diamond/routing.json",
+      "sha256": "468061323aa8e3c4cc7bd2e3b6e63011b088eb6933a9614fbf8f9336074a6e02"
+    },
+    {
+      "path": "verified-diamond/workflow.json",
+      "sha256": "d4ac8f923f2546eadef7736b5249b4830c3aabf77cee3c62880128bb789cc5aa"
+    }
+  ]
+}

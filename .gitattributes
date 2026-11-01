@@ -1,1 +1,2 @@
-workflows/double-diamond/** -text
+# Manifests hash exact bytes: keep every shipped file byte-identical on all platforms.
+* -text

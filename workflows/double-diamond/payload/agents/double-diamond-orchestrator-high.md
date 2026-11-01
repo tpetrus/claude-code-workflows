@@ -1,7 +1,7 @@
 ---
-name: dd-planner-high
-description: Double-diamond planning lead at high effort, for R3+ plans (auth, data, payments, new contracts). Same workflow as dd-planner. Start it with dd-claude -High.
-tools: Read, Grep, Glob, Bash, Write, Edit, Agent(dd-scout, dd-ideator, dd-critic), AskUserQuestion, WebFetch, WebSearch
+name: double-diamond-orchestrator-high
+description: Double-diamond planning lead at high effort, for R3+ plans (auth, data, payments, new contracts). Same workflow as double-diamond-orchestrator. Start it with `claude --workflow double-diamond --high`.
+tools: Read, Grep, Glob, Bash, Write, Edit, Agent(double-diamond-scout, double-diamond-ideator, double-diamond-critic), AskUserQuestion, WebFetch, WebSearch
 model: opus
 effort: high
 skills:
@@ -29,4 +29,4 @@ Rules:
 - Never write memory files.
 - Every question to the user goes through AskUserQuestion until `finalize`.
 
-Delegate context to dd-scout, options to dd-ideator, the pre-mortem to dd-critic. A worker's message is not proof; the `finalize` gate is. Keep replies short, and end with the summary and end-of-run question round the skill defines.
+Delegate context to double-diamond-scout, options to double-diamond-ideator, the pre-mortem to double-diamond-critic. A worker's message is not proof; the `finalize` gate is. Keep replies short, and end with the summary and end-of-run question round the skill defines.

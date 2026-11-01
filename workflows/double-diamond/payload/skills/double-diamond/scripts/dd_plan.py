@@ -177,7 +177,7 @@ def cmd_init(args, flags):
     os.mkdir(p("cards"), 0o700)
     title = flags["title"] if isinstance(flags.get("title"), str) else ""
     write_json(p("plan.json"), new_plan(read_json(TEMPLATE), detect_project(), slug, run_id, title, lane, risk, HARNESS, session_key(), now_iso()))
-    warnings = [] if os.environ.get("DD_LAUNCHER") == "1" else ["not started with dd-claude: write guards and memory isolation are off"]
+    warnings = [] if os.environ.get("DD_LAUNCHER") == "1" else ["not started with the launcher (claude --workflow double-diamond): write guards and memory isolation are off"]
     vd = os.path.exists(os.path.join(os.path.expanduser("~"), ".claude", "skills", "verified-diamond", "SKILL.md"))
     print(dumps({"run": folder, "plan": p("plan.json"), "patch": p("patch.json"), "brief": p("context-brief.md"), "cards_dir": p("cards"), "critic": p("critic.json"),
                  "canary": canary_path(run_id), "verified_diamond_available": vd, "warnings": warnings}))
@@ -281,7 +281,7 @@ def cmd_revise(run, args, flags):
     plan["project"]["base_revision"] = detect_project()["base_revision"]
     write_json(run.file, plan)
     if plan["project"]["base_revision"] != previous and get(plan, "evidence", "brief_sha256"):
-        print("WARN   the context brief predates the current HEAD; re-run dd-scout if the change matters")
+        print("WARN   the context brief predates the current HEAD; re-run double-diamond-scout if the change matters")
     print(dumps({"plan": run.file, "revision": plan["revision"], "archived": history}))
 
 

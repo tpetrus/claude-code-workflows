@@ -1,5 +1,5 @@
 ---
-name: dd-scout
+name: double-diamond-scout
 description: Double-diamond scout. Read-only, low-cost repository context gatherer that writes one compact context brief for a feature plan. Launched by the double-diamond planner.
 tools: Read, Grep, Glob, Write
 model: haiku

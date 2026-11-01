@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # Starts Claude Code as the double-diamond planner. The only supported Claude Code entry point.
-# Usage: dd-claude.sh [--high] [extra claude args]
+# Usage: launch.sh [--high] [extra claude args]
 #  Checks that python3, claude and the installed write guard work (the guard must block a test write),
 #  creates the runs folder, writes a per-launch settings file (auto memory off, user CLAUDE.md and
 #  rules folder hidden), then runs
-#  `claude --agent dd-planner|dd-planner-high --add-dir <runs root> --settings <file> <extra args>`.
+#  `claude --agent double-diamond-orchestrator|double-diamond-orchestrator-high --add-dir <runs root> --settings <file> <extra args>`.
 #  DD_LAUNCHER and CLAUDE_CODE_DISABLE_AUTO_MEMORY are set for the claude process only.
 set -eu
 
 fail() {
-  printf 'dd-claude: %s\n' "$*" >&2
+  printf 'double-diamond launcher: %s\n' "$*" >&2
   exit 1
 }
 
@@ -78,8 +78,8 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 # 6. Run claude with the launcher variables set for the child only.
-agent="dd-planner"
-[ "$high" -eq 1 ] && agent="dd-planner-high"
+agent="double-diamond-orchestrator"
+[ "$high" -eq 1 ] && agent="double-diamond-orchestrator-high"
 status=0
 DD_LAUNCHER=1 CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 \
   claude --agent "$agent" --add-dir "$runs_root" --settings "$settings" ${extra[@]+"${extra[@]}"} || status=$?

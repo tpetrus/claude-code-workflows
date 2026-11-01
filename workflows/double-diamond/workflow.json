@@ -1,0 +1,25 @@
+{
+  "name": "double-diamond",
+  "version": "2.1.0",
+  "summary": "Plan a feature before building it: discover, define, develop and deliver, with a pre-mortem and a deterministic gate. Exports a plan verified-diamond can build.",
+  "orchestrator": "double-diamond-orchestrator",
+  "skill": "double-diamond",
+  "usage": [
+    "claude --workflow double-diamond            (add --high for R3+ plans)",
+    "then describe the feature you want to plan"
+  ],
+  "launch": {
+    "windows": "skills/double-diamond/scripts/launch.ps1",
+    "posix": "skills/double-diamond/scripts/launch.sh"
+  },
+  "requires": ["claude", "python3"],
+  "legacy_files": {
+    "agents/dd-planner.md": "9f5e8f33ceac9c1ce90bf39be7ad49b35218691eda8ab8812fa62ac9fde3ef9f",
+    "agents/dd-planner-high.md": "c83262db298413a25aa443b4493de828957f265fdd5828bb9a12a0f6d86a3275",
+    "agents/dd-scout.md": "857877c1c654493db40b22b6a6ddbec1a4f2b196247bcf26ad3808bccab95c72",
+    "agents/dd-ideator.md": "f352ea2c40383874a96e48323747a22e6985a14c706bae35fa3f312716954be0",
+    "agents/dd-critic.md": "8b0fef53f2446bc7f5922cf97276fa05b9349c7cbffb5b047bf0d602c77c7031",
+    "skills/double-diamond/scripts/dd-claude.ps1": "545df07cb459e03a00c890b2b1c08c4054e04203dc8a268c8c2ae2dc5c4cc79a",
+    "skills/double-diamond/scripts/dd-claude.sh": "44160969528a2c84bc76632c23b3da06ea7312b8530db677da159c574ea19fcb"
+  }
+}

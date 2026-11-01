@@ -510,19 +510,19 @@ def validate_plan(plan):
         need(len(risks) > 0, "R2+: risks needs at least one entry")
         need(filled(g("design", "rollout")), "R2+: design.rollout (rollout and rollback) is required")
     critic_ran = filled(evidence.get("critic_sha256"))
-    if lane == "full" or rank(risk) >= 2: need(critic_ran, "critic pre-mortem must run before finalize (run dd-critic, then collect)")
+    if lane == "full" or rank(risk) >= 2: need(critic_ran, "critic pre-mortem must run before finalize (run double-diamond-critic, then collect)")
     if critic_ran:
         basis, current = obj(evidence.get("critic_basis")), critic_basis(plan)
         if basis.get("chosen_option") != current["chosen_option"] or basis.get("risk") != current["risk"]:
-            errors.append("critic is stale: the chosen option or risk changed since it ran; re-run dd-critic")
+            errors.append("critic is stale: the chosen option or risk changed since it ran; re-run double-diamond-critic")
         if basis.get("contracts_sha256") != current["contracts_sha256"] or basis.get("acs_sha256") != current["acs_sha256"]:
-            warnings.append("contracts or acceptance criteria changed after the critic ran; re-run dd-critic only if a blocker fix changed them")
+            warnings.append("contracts or acceptance criteria changed after the critic ran; re-run double-diamond-critic only if a blocker fix changed them")
     for i, f in enumerate(lst(g("critic", "findings"))):
         name = f"{js(dflt(get(f, 'id'), i))} ({js(get(f, 'severity'))})"
         if get(f, "severity") in ("blocker", "high") and not filled(f.get("resolution")): errors.append(f"critic finding {name} needs a resolution")
         elif not filled(get(f, "resolution")): warnings.append(f"critic finding {name} has no resolution")
     if g("critic", "verdict") == "rethink": warnings.append("critic verdict was 'rethink': confirm the resolutions address the approach, not only individual findings")
-    if lane == "full" and g("project", "is_git") is True and not filled(evidence.get("brief_sha256")): errors.append("full lane in a repository: run dd-scout, then collect")
+    if lane == "full" and g("project", "is_git") is True and not filled(evidence.get("brief_sha256")): errors.append("full lane in a repository: run double-diamond-scout, then collect")
     assumptions = [d for d in decisions if get(d, "decided_by") == "planner-assumption"]
     if assumptions: warnings.append(f"{len(assumptions)} decision(s) are planner assumptions: confirm them with the user")
     for key in SCANNED:

@@ -1,33 +1,38 @@
 {
-  "kind": "double-diamond-package",
-  "name": "double-diamond-claude-code",
-  "harness": "claude-code",
-  "version": "2.0.0",
-  "generated": "2026-10-30T21:06:31.260Z",
+  "name": "double-diamond",
+  "version": "2.1.0",
   "files": [
     {
-      "path": "agents/dd-critic.md",
-      "sha256": "8b0fef53f2446bc7f5922cf97276fa05b9349c7cbffb5b047bf0d602c77c7031"
+      "path": "agents/double-diamond-critic.md",
+      "sha256": "ff7b654066bf3b2338c8e109a9f29e3fbfb7eb60630959c81836170092c5f74f"
     },
     {
-      "path": "agents/dd-ideator.md",
-      "sha256": "f352ea2c40383874a96e48323747a22e6985a14c706bae35fa3f312716954be0"
+      "path": "agents/double-diamond-ideator.md",
+      "sha256": "82b33bf2b9da2508f33cc11209f621c850f90e3f98bc9d646f4cbe647018b7c9"
     },
     {
-      "path": "agents/dd-planner-high.md",
-      "sha256": "c83262db298413a25aa443b4493de828957f265fdd5828bb9a12a0f6d86a3275"
+      "path": "agents/double-diamond-orchestrator-high.md",
+      "sha256": "12a9287c4fa83c9fa6a976e8860587cf129097b8a9d4b3ec354eb327aa38d5c5"
     },
     {
-      "path": "agents/dd-planner.md",
-      "sha256": "9f5e8f33ceac9c1ce90bf39be7ad49b35218691eda8ab8812fa62ac9fde3ef9f"
+      "path": "agents/double-diamond-orchestrator.md",
+      "sha256": "1f9cf76ed9393c4cb32477878e14f3b245cc2f39e584c8f351f582bc62b39b6b"
     },
     {
-      "path": "agents/dd-scout.md",
-      "sha256": "857877c1c654493db40b22b6a6ddbec1a4f2b196247bcf26ad3808bccab95c72"
+      "path": "agents/double-diamond-scout.md",
+      "sha256": "ce8b9ae78e0a2ea9e22e275226b27eb64ddb68015db5e35320d202757b4d05c5"
+    },
+    {
+      "path": "double-diamond/README.md",
+      "sha256": "7ab5e562cee63b4b1d4962592e1e5505af177b362bd8a2b58df4b41288a36fe8"
+    },
+    {
+      "path": "double-diamond/workflow.json",
+      "sha256": "620728af7a2c345d383e21a213c19f029b9dbf8fc720d43284a9193d9686cee9"
     },
     {
       "path": "skills/double-diamond/SKILL.md",
-      "sha256": "31a36d0a1e233e6b642ddee75727f05b7323f8966eaaf252a6f055b81c63cf8e"
+      "sha256": "c935d1cf739eb3516e55e6452aab44b17c06fb43b584fd2f03b13928ab1ee039"
     },
     {
       "path": "skills/double-diamond/assets/plan.template.json",
@@ -35,31 +40,31 @@
     },
     {
       "path": "skills/double-diamond/references/plan-schema.md",
-      "sha256": "6e851c61e6c25af453e9561b098d1572b5733f9bd846b113081170f2ce5ada38"
+      "sha256": "b41795c41bbadeafd9eccaa31a7852fe25fb2756aa447743d200bfd25715738a"
     },
     {
       "path": "skills/double-diamond/references/verified-diamond-handoff.md",
-      "sha256": "87d3589a019588292e2947bb768bb0ddb80ddcbdcc48a0ff86992c5b6390fdc4"
-    },
-    {
-      "path": "skills/double-diamond/scripts/dd-claude.ps1",
-      "sha256": "545df07cb459e03a00c890b2b1c08c4054e04203dc8a268c8c2ae2dc5c4cc79a"
-    },
-    {
-      "path": "skills/double-diamond/scripts/dd-claude.sh",
-      "sha256": "44160969528a2c84bc76632c23b3da06ea7312b8530db677da159c574ea19fcb"
+      "sha256": "bc90ac90d781b8a182e1c35f7b2909fef895b7c58f856da68111863b7e66b733"
     },
     {
       "path": "skills/double-diamond/scripts/dd_plan.py",
-      "sha256": "d73978a60621cebfaaca78b533606c09d14abd8e2a969f49b31a2c0c6592ae8e"
+      "sha256": "410b85ee084ec198a4d9804bafbf76b2eed7d21d17ac3c24c89d69b677fbf0d4"
     },
     {
       "path": "skills/double-diamond/scripts/guard_write.py",
       "sha256": "a3646197cbb82d6d890ac437ba4d4e64ffd59c3a2b7cbaf72ccfeed5d414dd8b"
     },
     {
+      "path": "skills/double-diamond/scripts/launch.ps1",
+      "sha256": "210902228ed2f389399c9e7e626311b028e79108b47299edccde24dd2bf4a7ac"
+    },
+    {
+      "path": "skills/double-diamond/scripts/launch.sh",
+      "sha256": "af5314f97b5a6b5ab32084183fbaccec975e4c15f9df44a11e8e7ea8383c24c6"
+    },
+    {
       "path": "skills/double-diamond/scripts/plan_core.py",
-      "sha256": "e2d50586285ff901f4cea45b122016c369561679097d87e92d9dec686cbcbe5a"
+      "sha256": "67d9111d7b608c6d859a670b48454658bb06d96d4b097893705246ace42798a1"
     }
   ]
 }

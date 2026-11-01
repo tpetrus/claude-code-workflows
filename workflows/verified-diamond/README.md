@@ -2,6 +2,17 @@
 
 A cost-aware orchestration workflow for Claude Code. An expensive model plans and integrates; cheaper models do bounded work in parallel; **deterministic commands (not model opinions) decide what passes**; an independent reviewer tries to break the result; risk level decides who approves the merge.
 
+## Start it
+
+From your project folder:
+
+```text
+claude --workflow verified-diamond          # starts Claude Code as verified-diamond-orchestrator
+/verified-diamond Add rate limiting to the public API
+```
+
+`claude --workflow verified-diamond` runs `claude --agent verified-diamond-orchestrator` (extra arguments are passed on). The agent preloads the `verified-diamond` skill, and the skill refuses to run in any other agent, so always start here. To build a plan exported by double-diamond: `/verified-diamond --plan "<plan.json>" <feature title>`. Without the shell integration, use `python3 ~/.claude/scripts/claude-workflow.py verified-diamond`.
+
 > **Fail-closed by design.** If your repo doesn't document its real install/lint/test/build commands, the pipeline stops and asks you to add them. It never invents commands.
 
 ## The idea: a diamond
@@ -143,7 +154,7 @@ flowchart LR
     X -->|"a command does it<br/>(formatter, codemod)"| P["Run the command<br/>no agent"]
     X -->|"trivial, single-file"| DL["<b>Direct lane</b><br/>claude --model haiku"]
     X -->|"captured R0/R1 cleanup<br/>with deterministic verifier"| FL["<b>Follow-up fast lane</b><br/>batched 3-5, Haiku/Sonnet-low"]
-    X -->|"substantive, multi-file"| FD["<b>Full diamond</b><br/>/verified-diamond"]
+    X -->|"substantive, multi-file"| FD["<b>Full diamond</b><br/>claude --workflow verified-diamond"]
 ```
 
 **Follow-up fast lane.** Reviewers find nice-to-have cleanups. Instead of fixing them inline or leaving them as prose, the orchestrator records each as a complete task packet (`vd.py followup-add`) while context is hot. After the main run, qualifying packets (R0/R1, verifier fully covers the change, no protected path or shared contract) are drained in batches of 3-5 with no re-planning. Anything that fails qualification, or fails verification twice, is ejected to the full diamond.
@@ -161,17 +172,32 @@ See [`docs/WHEN-TO-USE.md`](docs/WHEN-TO-USE.md) for the full decision guide and
 
 | Repo path | Installed to `~/.claude/` | Purpose |
 |---|---|---|
-| `payload/agents/*.md` | `agents/` | The five subagents |
-| `payload/skills/verified-diamond/` | `skills/verified-diamond/` | `/verified-diamond` skill and templates |
+| `payload/agents/verified-diamond-*.md` | `agents/` | The orchestrator and its four helper agents |
+| `payload/skills/verified-diamond/` | `skills/verified-diamond/` | `/verified-diamond` skill, `assets/` templates, and `scripts/vd.py` (state CLI: `init`, `add-task`, `ready`, `result`, `approve`, `status`, `followup-*`) |
 | `payload/hooks/verified-diamond-policy.py` | `hooks/` | Safety and audit hook |
-| `payload/scripts/vd.py` | `scripts/` | State CLI (`init`, `add-task`, `ready`, `result`, `approve`, `status`, `followup-*`) |
 | `payload/verified-diamond/routing.json` | `verified-diamond/` | Model routing, budgets, approval policy |
-| `docs/` | `verified-diamond/docs/` | Decision guide, economics, evaluation plan |
-| `payload/global-contract.md` | appended to `CLAUDE.md` | Global operating contract (marked block) |
+| `docs/`, `README.md`, `workflow.json`, `MANIFEST.json` | `verified-diamond/` | Decision guide, economics, evaluation plan, this guide, install record |
+| `payload/global-contract.md` | merged into `CLAUDE.md` | Global operating contract (marked block) |
 | `payload/settings.fragment.json` | merged into `settings.json` | Permissions, env, hooks |
+
+State lives in `~/.claude/verified-diamond/state/` and is never removed by the installer.
 
 Routing policy lives in `routing.json`; tune models, effort, and limits there. When docs and `routing.json` disagree, `routing.json` wins.
 
 ## Validation
 
 Run the same tasks with a single-Opus baseline and with Verified Diamond and compare; see [`docs/evaluation/README.md`](docs/evaluation/README.md).
+
+## Install, verify, uninstall
+
+From the repository root:
+
+```sh
+python3 install.py verified-diamond --dry-run   # preview every change
+python3 install.py verified-diamond             # install or update
+python3 install.py --shell                      # once: enables `claude --workflow <name>`
+python3 ~/.claude/skills/verified-diamond/scripts/vd.py status
+python3 install.py verified-diamond --uninstall # remove (state/ and edited files are kept)
+```
+
+Maintainers: after changing anything here, run `python3 tools/update_manifest.py` and `python3 tools/check.py verified-diamond` (which runs `tests/smoke_test.py`).
