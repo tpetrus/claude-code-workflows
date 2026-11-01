@@ -11,7 +11,7 @@ effort: medium
 1. Read `~/.claude/verified-diamond/routing.json`.
 2. Read repo guidance and discover real verification commands.
 3. If `$ARGUMENTS` starts with `--plan "<path>"`, follow Plan intake below; the rest of the arguments is the feature title. Run `python3 ~/.claude/skills/verified-diamond/scripts/vd.py init --title "<title>"` (without the `--plan` part).
-4. Fail closed if applicable commands are not explicitly documented.
+4. Fail closed if applicable commands (install, format, lint, typecheck, unit, integration, build, security, affected-scope) are not explicitly documented in the repository's `CLAUDE.md`, README, contribution guide, package scripts or architecture docs: ask the user to add them. Never invent commands.
 
 ## Flow
 INTAKE -> DISCOVER -> SPECIFY -> PLAN -> APPROVAL? -> EXECUTE_DAG -> INTEGRATE -> REVIEW -> REPAIR -> FINAL_GATE -> MERGE_DECISION.
@@ -50,6 +50,12 @@ Retention: state never grows unbounded. `vd.py` prunes resolved follow-ups to th
 
 ## Merge
 R0/R1 may auto-merge only if configuration is complete, all gates pass, no protected files or shared contracts changed, no dependency/CI/infrastructure/auth/schema change exists, and the change is reversible. R2+ always requires human approval.
+
+## Session hygiene
+One large feature per orchestrator session. After integration and final gates, drain the follow-up fast lane while caches are warm, confirm state and telemetry are written, then end the session; start the next feature in a fresh one. Durable memory lives in git, repository docs and verified-diamond state files, never in conversation context or session memory: re-read contracts from the repository rather than relying on compaction, and compact only mid-feature when the active DAG would otherwise be lost. Carry cross-feature decisions in repository docs (CLAUDE.md, ADRs).
+
+## Safety
+Never expose secrets, credentials, production data, customer PII or private source to external APIs or logs. Do not read secret-bearing paths. Do not perform destructive production actions.
 
 ## Stop
 Stop for missing contract, two repeated failures, scope expansion, unavailable credentials, unresolved high finding, destructive action, or human gate. Produce summary, acceptance status, changed files, commands, reviews, rollout, rollback, and remaining risks.

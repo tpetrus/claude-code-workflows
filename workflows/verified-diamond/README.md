@@ -177,7 +177,6 @@ See [`docs/WHEN-TO-USE.md`](docs/WHEN-TO-USE.md) for the full decision guide and
 | `payload/hooks/verified-diamond-policy.py` | `hooks/` | Safety and audit hook |
 | `payload/verified-diamond/routing.json` | `verified-diamond/` | Model routing, budgets, approval policy |
 | `docs/`, `README.md`, `workflow.json`, `MANIFEST.json` | `verified-diamond/` | Decision guide, economics, evaluation plan, this guide, install record |
-| `payload/global-contract.md` | merged into `CLAUDE.md` | Global operating contract (marked block) |
 | `payload/settings.fragment.json` | merged into `settings.json` | Permissions, env, hooks |
 
 State lives in `~/.claude/verified-diamond/state/` and is never removed by the installer.

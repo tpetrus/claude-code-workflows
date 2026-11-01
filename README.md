@@ -84,7 +84,8 @@ python3 ~/.claude/scripts/claude-workflow.py double-diamond --high
   writing anything. Re-run with `--force` to replace those files; a copy goes to
   `~/.claude/backups/claude-code-workflows/<time>/`.
 - **Merges** `settings.json` (permissions unioned, hooks added once, env set only if absent) and adds the
-  workflow's contract to `~/.claude/CLAUDE.md` inside `<!-- BEGIN/END <name> -->` markers. It keeps an
+  workflow's contract, if it ships one, to `~/.claude/CLAUDE.md` inside `<!-- BEGIN/END <name> -->` markers
+  (and removes that block once a workflow stops shipping one). No workflow here ships one today. It keeps an
   overview of installed workflows in `~/.claude/README.md` the same way. Your own text outside the markers
   is never touched.
 - Retires files left by older layouts of a workflow (moves them to backups), but only if you haven't
@@ -172,7 +173,8 @@ workflows/<name>/
     ├── hooks/<name>-<purpose>.py     optional  global hooks registered via settings.fragment.json
     ├── <name>/                       optional  config the workflow reads at run time (e.g. routing.json)
     ├── settings.fragment.json        optional  merged into ~/.claude/settings.json
-    └── global-contract.md            optional  merged into ~/.claude/CLAUDE.md as a marked block
+    └── global-contract.md            optional  merged into ~/.claude/CLAUDE.md as a marked block (loaded in every
+                                                session, so keep workflow rules in the skill instead)
 ```
 
 ### Once installed in `~/.claude`
