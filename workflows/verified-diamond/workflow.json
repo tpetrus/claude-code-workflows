@@ -1,6 +1,6 @@
 {
   "name": "verified-diamond",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "summary": "Build a change: Opus plans, cheaper models build in parallel, real commands decide pass/fail, a reviewer tries to break it, and risk decides who approves the merge.",
   "orchestrator": "verified-diamond-orchestrator",
   "skill": "verified-diamond",

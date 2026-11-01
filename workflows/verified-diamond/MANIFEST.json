@@ -1,6 +1,6 @@
 {
   "name": "verified-diamond",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "files": [
     {
       "path": "agents/verified-diamond-builder.md",
@@ -28,7 +28,7 @@
     },
     {
       "path": "skills/verified-diamond/SKILL.md",
-      "sha256": "b8c15e2f7d3eec2305da5931605451182a5d66272c5235fdcfd350843f3eb8aa"
+      "sha256": "4b394ac15585f135532b15d7b881ce61ddba03d6a41961a7e083edc95dd7335f"
     },
     {
       "path": "skills/verified-diamond/assets/followup-packet.json",
@@ -48,11 +48,11 @@
     },
     {
       "path": "verified-diamond/README.md",
-      "sha256": "6287bfc293866f2709725c7c8791e3165a031e486a6e40a9797c23e1669477fc"
+      "sha256": "aef21ca60a533f2d6e3db3d7ff5cadb398900e2a2e46693b7ccc81831bc06bf0"
     },
     {
       "path": "verified-diamond/docs/WHEN-TO-USE.md",
-      "sha256": "a5610845a9600c375f01c799475a19ccbd777014ad2ed800406874810413323e"
+      "sha256": "74ff1545bae8f49b0af28247235f28371b2a3f17eb4754372c051953e646b963"
     },
     {
       "path": "verified-diamond/docs/evaluation/README.md",
@@ -68,7 +68,7 @@
     },
     {
       "path": "verified-diamond/workflow.json",
-      "sha256": "d4ac8f923f2546eadef7736b5249b4830c3aabf77cee3c62880128bb789cc5aa"
+      "sha256": "bc1fb8c2f9b673caf7afad3a2ad8c8b90039ee49c7ff32b253d721c8f7fff9ba"
     }
   ]
 }

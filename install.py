@@ -205,11 +205,13 @@ def installed_names(target):
 
 def merge_contract(name, target, args, remove=False):
     src = os.path.join(workflow_dir(name), "payload", "global-contract.md")
-    if not os.path.isfile(src):
-        return
     dst = os.path.join(target, "CLAUDE.md")
     cur = open(dst, encoding="utf-8").read() if os.path.exists(dst) else ""
+    if not os.path.isfile(src):
+        remove = True  # no contract (any more): drop a marked block an older version of this workflow left behind
     if remove:
+        if f"<!-- BEGIN {name} -->" not in cur:
+            return
         new = set_block(cur, name, None)
     else:
         body = open(src, encoding="utf-8").read()
