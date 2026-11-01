@@ -1,6 +1,6 @@
 {
   "name": "double-diamond",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "files": [
     {
       "path": "agents/double-diamond-critic.md",
@@ -24,15 +24,15 @@
     },
     {
       "path": "double-diamond/README.md",
-      "sha256": "7ab5e562cee63b4b1d4962592e1e5505af177b362bd8a2b58df4b41288a36fe8"
+      "sha256": "c25133f89a12aa6fdb4d6ea099636217eea23ea1eeb35a6eebc7ecbf4f76ea26"
     },
     {
       "path": "double-diamond/workflow.json",
-      "sha256": "620728af7a2c345d383e21a213c19f029b9dbf8fc720d43284a9193d9686cee9"
+      "sha256": "951dca241652a5f8d28d88be4e554d8658b8355002370c4b1ba88d7f8b54d768"
     },
     {
       "path": "skills/double-diamond/SKILL.md",
-      "sha256": "c935d1cf739eb3516e55e6452aab44b17c06fb43b584fd2f03b13928ab1ee039"
+      "sha256": "e83729f72918ebd3ad23f4e0f8b2f0990e635000ba54ee6cf9c00d0f831ae6fc"
     },
     {
       "path": "skills/double-diamond/assets/plan.template.json",
@@ -52,7 +52,7 @@
     },
     {
       "path": "skills/double-diamond/scripts/guard_write.py",
-      "sha256": "a3646197cbb82d6d890ac437ba4d4e64ffd59c3a2b7cbaf72ccfeed5d414dd8b"
+      "sha256": "be12d1086b45defc4381c975b3b713d31b3101e85dbfde9f4338dd23ea572c51"
     },
     {
       "path": "skills/double-diamond/scripts/launch.ps1",
@@ -64,7 +64,7 @@
     },
     {
       "path": "skills/double-diamond/scripts/plan_core.py",
-      "sha256": "67d9111d7b608c6d859a670b48454658bb06d96d4b097893705246ace42798a1"
+      "sha256": "68b975537a2fd343044652b83ba2feaa65f2163d255328ae30dda6ff725284a8"
     }
   ]
 }

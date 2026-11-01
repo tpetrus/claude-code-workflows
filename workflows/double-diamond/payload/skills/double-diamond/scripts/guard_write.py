@@ -4,11 +4,13 @@ Reads the hook payload on stdin and always exits 0 with a JSON permissionDecisio
 used instead of exit code 2 because a PowerShell -Command wrapper rewrites a native exit 2 to 1, a non-blocking error. Fails closed.
   plan|brief|card|critic Write/Edit: only that seat's own file inside an existing run folder, also after links are resolved.
   bash                   Only `python3 "<dd_plan.py next to this guard>" <command> ...`, nothing chained; `export` answers ask.
-Modes plan and bash are bound to the session that created the run (payload session_id vs run.session_key); worker modes are not."""
+Modes plan and bash are bound to the session that created the run (payload session_id vs run.session_key); worker modes are not.
+The lead's hooks are session-wide (they come from the --agent frontmatter) and so also fire for subagent calls: the seat applied is the
+caller's (payload agent_type), never the hook's own when they differ. Unknown subagents are denied; workers may not run Bash."""
 import os, re, sys
 
 sys.dont_write_bytecode = True  # keep the installed skill folder free of __pycache__
-from plan_core import (GUARD_MODES, RUN_ID, allowed_write, bash_invocation, dumps, expand_home, get, js, match, parse_json, realpath_inside, rel_inside,
+from plan_core import (GUARD_MODES, RUN_ID, allowed_write, bash_invocation, caller_seat, dumps, expand_home, get, js, match, parse_json, realpath_inside, rel_inside,
                        runs_root, session_matches)
 
 SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dd_plan.py")
@@ -37,6 +39,9 @@ def decide(mode, raw):
     if mode not in GUARD_MODES: return "deny", f'unknown mode "{js(mode)}"; expected {"/".join(GUARD_MODES)}'
     payload, error = parse_json(raw)
     if error: return "deny", "unreadable hook payload"
+    # The hook's mode names the seat it was registered for; the caller's agent decides which seat's rules apply (see caller_seat).
+    mode, why = caller_seat(mode, get(payload, "agent_id"), get(payload, "agent_type"))
+    if not mode: return "deny", why
     session_id, cwd, root = get(payload, "session_id"), get(payload, "cwd"), runs_root()
     cwd = cwd if isinstance(cwd, str) and cwd else os.getcwd()
     if mode == "bash":

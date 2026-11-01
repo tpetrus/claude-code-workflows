@@ -147,10 +147,11 @@ Exit codes: 0 success; 1 gate fail, rejected, refused, not verified or canary fa
   - token 1 is `python3` or `python3.exe`, case-insensitive;
   - token 2, after MSYS conversion (`/c/Users/...` to `C:/Users/...`) and `\` to `/` (case-folded on Windows), equals the `dd_plan.py` next to the guard;
   - token 3 is one of the CLI command names.
+- **Caller seat** (`caller_seat(mode, agent_id, agent_type)`, pure, applied before everything else): the lead's hooks come from the `--agent` frontmatter, which Claude Code applies session-wide, so they also fire for subagent tool calls (payload `agent_id` set, `agent_type` = the subagent's name). The seat is the caller's, not the hook's: `agent_type` `double-diamond-scout`/`-ideator`/`-critic` gives `brief`/`card`/`critic` for writes and a deny for `bash`; `agent_type` `double-diamond-orchestrator[-high]` gives `plan` (or `bash`); a non-empty `agent_id` with any other `agent_type` is denied; no agent fields keep the hook's own mode. So the lead's and the worker's hooks always return the same decision for the same call (deny > allow would otherwise block every worker).
 - **Hardening**:
   - Non-Windows: the relative path is split on `/` only.
   - Also deny when the `realpath` of the target's nearest existing ancestor is outside `realpath(runs root)`.
-  - Modes `plan` and `bash` are session-bound: when payload `session_id` and the run's `run.session_key` are both non-empty they must match (`sha256(session_id)` first 16 hex). Worker modes are not session-bound until subagent session ids are verified live.
+  - Seats `plan` and `bash` (after the caller-seat step) are session-bound: when payload `session_id` and the run's `run.session_key` are both non-empty they must match (`sha256(session_id)` first 16 hex). Worker seats are not session-bound until subagent session ids are verified live.
   - Every unexpected exception is a deny.
 - **`export` asks**: an allowed bash command whose command name is `export` gets `permissionDecision: "ask"`.
 - **Decision output** (stdout, exit 0): allowed is `{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","permissionDecisionReason":"double-diamond guard: allowed"}}`. Denied is the same shape with `"deny"` and a reason (also written to stderr). A JSON decision is used instead of exit code 2 because a PowerShell wrapper rewrites a native exit 2 to 1, which Claude Code treats as non-blocking.
@@ -186,7 +187,7 @@ Exit codes: 0 success; 1 gate fail, rejected, refused, not verified or canary fa
   - `double-diamond-critic`: `model: sonnet`, `effort: high`, `maxTurns: 20`, mode `critic` (a different model from the lead, so the blind spots differ).
 
 ## 13. Skill and docs
-- **SKILL.md frontmatter**: `name: double-diamond`; description of at most 200 characters; `compatibility`; `metadata` with `version: "2.1.0"` and `family: diamond-workflows`. Never `disable-model-invocation` (it would block the planner's `skills:` preload).
+- **SKILL.md frontmatter**: `name: double-diamond`; description of at most 200 characters; `compatibility`; `metadata` with `version: "2.1.1"` and `family: diamond-workflows`. Never `disable-model-invocation` (it would block the planner's `skills:` preload).
 - **SKILL.md body**:
   - fewer than 500 lines (target about 170);
   - contains `at most **4 questions per round**`, `at most **3 rounds**` and `up to 3 attempts`;
@@ -203,5 +204,5 @@ Exit codes: 0 success; 1 gate fail, rejected, refused, not verified or canary fa
 - `tests/smoke_test.py` runs against the source payload with the current interpreter, in a temporary runs root (`DD_RUNS_ROOT`) and a temporary git repository. It covers the guard decisions (allow, deny, ask, session binding), the patch protocol, collect, the gate, finalize, export, verify, canary and discard. Run it after every payload change, before regenerating the manifest.
 
 ## 15. Open items (verify live before relying on them)
-- Whether the guard's `allow` avoids prompts in background workers; whether `--add-dir` applies to subagents; whether `claudeMdExcludes` via `--settings` excludes the user CLAUDE.md and rules; whether subagent hook payloads carry the parent `session_id` (if they do, bind worker modes too).
+- Whether the guard's `allow` avoids prompts in background workers; whether `--add-dir` applies to subagents; whether `claudeMdExcludes` via `--settings` excludes the user CLAUDE.md and rules; whether subagent hook payloads carry the parent `session_id` (if they do, bind worker modes too). Whether a worker frontmatter hook also fires for a sibling worker running at the same time (harmless now: the caller seat applies either way).
 - Deferred hardening: canaries for the Bash and worker hooks (only the planner's Write hook is canary-checked); Read/Glob are not session-scoped; no lock around concurrent plan.json writes (single-lead use only).

@@ -94,6 +94,28 @@ def guard_checks(env, run, repo):
                            ("other interpreter", f'node "{script}" show "{run}"'), ("other script", 'python3 "/tmp/evil.py" show x'),
                            ("unknown command", f'python3 "{script}" rm "{run}"'), ("newline", f'python3 "{script}" show "{run}"\nwhoami')]:
         check(f"guard: {label} is denied", guard(env, "bash", bash_call(command)) == "deny")
+    # The lead's hooks are session-wide (--agent frontmatter), so they also fire for subagent calls, identified by agent_id/agent_type.
+    def as_agent(call, agent_type, agent_id="agent-1"):
+        return {**call, "agent_type": agent_type, **({"agent_id": agent_id} if agent_id else {})}
+    for agent, own, seat_file, other_file in (("double-diamond-scout", "brief", r / "context-brief.md", r / "critic.json"),
+                                              ("double-diamond-ideator", "card", r / "cards" / "O2.json", r / "context-brief.md"),
+                                              ("double-diamond-critic", "critic", r / "critic.json", r / "patch.json")):
+        for hook in ("plan", own):  # the lead's session-wide hook and the worker's own hook must agree
+            check(f"guard: {hook} hook lets {agent} write its artifact", guard(env, hook, as_agent(write_call(seat_file), agent)) == "allow")
+            check(f"guard: {hook} hook denies {agent} another seat's file", guard(env, hook, as_agent(write_call(other_file), agent)) == "deny")
+        check(f"guard: lead bash hook denies {agent} shell commands",
+              guard(env, "bash", as_agent(bash_call(f'python3 "{script}" show "{run}"'), agent)) == "deny")
+    check("guard: worker of another session is not session-bound",
+          guard(env, "plan", as_agent({**write_call(r / "critic.json"), "session_id": OTHER_SESSION}, "double-diamond-critic")) == "allow")
+    check("guard: unknown subagent is denied", guard(env, "plan", as_agent(write_call(r / "patch.json"), "general-purpose")) == "deny")
+    check("guard: subagent without agent_type is denied", guard(env, "plan", {**write_call(r / "patch.json"), "agent_id": "agent-1"}) == "deny")
+    for lead in ("double-diamond-orchestrator", "double-diamond-orchestrator-high"):
+        check(f"guard: {lead} main thread may write patch.json", guard(env, "plan", as_agent(write_call(r / "patch.json"), lead, None)) == "allow")
+        check(f"guard: {lead} main thread may not write the brief", guard(env, "plan", as_agent(write_call(r / "context-brief.md"), lead, None)) == "deny")
+        check(f"guard: {lead} main thread may run the script",
+              guard(env, "bash", as_agent(bash_call(f'python3 "{script}" show "{run}"'), lead, None)) == "allow")
+    check("guard: lead of another session is still denied",
+          guard(env, "plan", as_agent({**write_call(r / "patch.json"), "session_id": OTHER_SESSION}, "double-diamond-orchestrator", None)) == "deny")
     check("guard: script call on another session's run is denied", guard(env, "bash", bash_call(f'python3 "{script}" show "{run}"', OTHER_SESSION)) == "deny")
 
 

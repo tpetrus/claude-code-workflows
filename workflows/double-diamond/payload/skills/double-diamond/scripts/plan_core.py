@@ -20,6 +20,8 @@ FORBIDDEN_KEYS = ["__proto__", "constructor", "prototype"]  # prototype-style ke
 BRIEF_HEADINGS = ["Stack", "Relevant code", "Analogous feature", "Conventions", "Constraints and risks", "Commands", "Unknowns"]
 CLI_COMMANDS = "init apply collect validate show render finalize revise export verify discard canary runs-root help".split()
 GUARD_MODES = "plan brief card critic bash".split()
+LEAD_AGENTS = ("double-diamond-orchestrator", "double-diamond-orchestrator-high")
+WORKER_SEATS = {"double-diamond-scout": "brief", "double-diamond-ideator": "card", "double-diamond-critic": "critic"}
 VD_ESCALATION = ["contract ambiguity", "needs unowned path", "verification fails twice", "shared interface change", "high-risk issue discovered"]
 ID_ARRAYS = "acceptance_criteria decisions options design.contracts risks slices open_questions critic.findings".split()
 # What the lead may patch: True = the whole key, a list = only those child keys.
@@ -164,6 +166,20 @@ def detect_project(cwd=None):
 def expand_home(file_path):
     r"""A leading ~/ or ~\ means the home folder; nothing else expands."""
     return os.path.join(os.path.expanduser("~"), file_path[2:]) if re.match(r"~[\\/]", file_path) else file_path
+
+
+def caller_seat(mode, agent_id, agent_type):
+    """The seat whose rules apply to this tool call: (seat, "") or (None, deny reason).
+    The lead's hooks come from the frontmatter of the agent started with --agent, so Claude Code applies them session-wide and they
+    also fire for every subagent tool call (the payload then carries agent_id and the subagent's agent_type). A worker must be judged
+    by its own seat there, not the lead's, or the lead's deny overrides the worker's allow. Without agent fields (older Claude Code,
+    the launcher self-test) the hook's own mode applies, which is the old behavior."""
+    if mode not in GUARD_MODES: return None, f'unknown mode "{js(mode)}"; expected {"/".join(GUARD_MODES)}'
+    kind = js(agent_type) if filled(agent_type) else ""
+    if filled(agent_id) and kind not in WORKER_SEATS: return None, f'subagent "{kind}" is not a double-diamond worker'
+    if kind in WORKER_SEATS: return (None, f"{kind} may not run shell commands") if mode == "bash" else (WORKER_SEATS[kind], "")
+    if kind in LEAD_AGENTS: return ("bash" if mode == "bash" else "plan"), ""
+    return mode, ""
 
 
 def allowed_write(file_path, mode, cwd, run_exists):
