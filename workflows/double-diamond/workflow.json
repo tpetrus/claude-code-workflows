@@ -1,6 +1,6 @@
 {
   "name": "double-diamond",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "summary": "Plan a feature before building it: discover, define, develop and deliver, with a pre-mortem and a deterministic gate. Exports a plan verified-diamond can build.",
   "orchestrator": "double-diamond-orchestrator",
   "skill": "double-diamond",

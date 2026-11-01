@@ -131,6 +131,8 @@ Each agent has `PreToolUse` hooks that run `skills/double-diamond/scripts/guard_
 | ideator | only `cards/O<n>.json` | none (no Bash tool) |
 | critic | only `critic.json` | none (no Bash tool) |
 
+The lead's hooks come from the frontmatter of the agent started with `--agent`, so Claude Code applies them to the whole session, including every worker's tool calls. The guard therefore applies the seat of the agent that made the call (the hook payload's `agent_type`), not the seat of the hook that fired, so a worker is never judged by the lead's rules. A subagent that is not a double-diamond worker is denied, and workers may not run Bash.
+
 Guards fail closed: an unknown mode or an unreadable payload is denied. A blocked call gets a JSON `deny` decision. That works in both Git Bash and PowerShell; an exit code 2 would be rewritten to 1 by PowerShell, which Claude Code treats as non-blocking. The hooks call `$HOME/.claude/skills/...`, so install into the default `~/.claude`.
 
 ## Verify

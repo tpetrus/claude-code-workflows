@@ -3,7 +3,7 @@ name: double-diamond
 description: "Plan a feature before building it: triage, ask only real decisions, compare options, run a pre-mortem and gate the plan. Start it with `claude --workflow double-diamond`."
 compatibility: "Claude Code. Python 3.9+ (python3 on PATH) for scripts/dd_plan.py. Needs AskUserQuestion (main session only). Worker agents double-diamond-scout, double-diamond-ideator, double-diamond-critic. Optional verified-diamond skill for hand-off."
 metadata:
-  version: "2.1.0"
+  version: "2.1.1"
   family: diamond-workflows
 ---
 
