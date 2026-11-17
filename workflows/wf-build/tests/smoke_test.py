@@ -71,6 +71,9 @@ def main():
         check("hook blocks a destructive command", code == 2 and '"block"' in out, out)
         code, out = hook("pre", {"tool_name": "Read", "tool_input": {"file_path": "/home/u/.s" + "sh/id_rsa"}, "cwd": str(repo)})
         check("hook blocks a secret path", code == 2, out)
+        telemetry = list(state.rglob("hook-telemetry.json"))
+        check("hook telemetry is written under <home>/.claude/wf-build/state", len(telemetry) == 1, str(telemetry))
+        check("hook still blocks a destructive command with exit 2", hook("pre", {"tool_name": "Bash", "tool_input": {"command": "git push --" + "force"}, "cwd": str(repo)})[0] == 2)
         check("hook post phase", hook("post", {"tool_name": "Bash", "cwd": str(repo)})[0] == 0)
 
     for f in failures:

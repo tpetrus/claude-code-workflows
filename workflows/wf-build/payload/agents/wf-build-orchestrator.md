@@ -1,6 +1,6 @@
 ---
 name: wf-build-orchestrator
-description: Plans and integrates verified diamond work. Use for substantive cross-layer tasks, ambiguity, decomposition, and integration. Start it with `claude --workflow wf-build`.
+description: Plans and integrates work. Use for substantive cross-layer tasks, ambiguity, decomposition, and integration. Start it with `claude --workflow wf-build`.
 model: opus
 effort: medium
 tools: Read, Grep, Glob, Bash, Agent, Write, Edit

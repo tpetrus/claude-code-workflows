@@ -2,14 +2,14 @@
 
 Decision guide for the wf-build Claude Code configuration. Routing policy lives in `~/.claude/wf-build/routing.json`; this document explains intent. When the two disagree, routing.json wins. Quality/cost tradeoffs per model and effort are in `model-economics.md`.
 
-## First decision: do you need the diamond at all?
+## First decision: do you need the full workflow at all?
 
 | Situation | Use |
 |---|---|
 | A deterministic command covers it (format, `lint --fix`, codegen, codemod) | Run the command directly. No agent. |
 | Small, single-file, obvious change (color, copy, config value) | Direct lane: `claude --model haiku`, direct edit. No workflow ceremony. |
 | Pre-captured R0/R1 cleanup with a deterministic verifier | Follow-up fast lane: drain `wf_build.py followup-ready` items. |
-| Substantive multi-file feature, decomposable into bounded tasks | Full diamond: wf-build skill + orchestrator. |
+| Substantive multi-file feature, decomposable into bounded tasks | Full wf-build workflow: wf-build skill + orchestrator. |
 | Substantive but inherently serial work (one abstraction, one owner) | Orchestrator session without fan-out. Do not manufacture parallel subtasks. |
 
 ## Direct lane (trivial work)
@@ -54,7 +54,7 @@ Escalate blocking, uncertain findings to Opus high. Non-blocking medium/low find
 
 ## Lanes at a glance
 
-| | Full diamond | Fast lane |
+| | Full workflow | Fast lane |
 |---|---|---|
 | Entry | wf-build skill | drain `followup-ready` items |
 | Planning | Opus DAG + contract freeze | None - packets were pre-built at review time |

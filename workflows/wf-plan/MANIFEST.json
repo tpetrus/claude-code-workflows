@@ -56,11 +56,11 @@
     },
     {
       "path": "skills/wf-plan/scripts/wf_plan.py",
-      "sha256": "16c9ec76c8beff6dbb1fe4c3df6bb16389887a6673f1d5b67482ff2158b20ca2"
+      "sha256": "d7b69b20e6f32ea0fd7658f8351c5b4f4f409a650712dde91826ead6cfb0d399"
     },
     {
       "path": "wf-plan/README.md",
-      "sha256": "04437ed3cc34754a78f86ac3c818222f43d859e14f620929f435b2731e46a5ee"
+      "sha256": "b22c18857a9c3d29806d4578e8045ec33c84c4326bda255a815d0caae81fc38a"
     },
     {
       "path": "wf-plan/workflow.json",

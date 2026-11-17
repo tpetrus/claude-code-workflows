@@ -107,6 +107,13 @@ def guard_checks(env, run, repo):
               guard(env, "bash", as_agent(bash_call(f'python3 "{script}" show "{run}"'), agent)) == "deny")
     check("guard: worker of another session is not session-bound",
           guard(env, "plan", as_agent({**write_call(r / "critic.json"), "session_id": OTHER_SESSION}, "wf-plan-critic")) == "allow")
+    outside = Path(repo) / "x.txt"
+    for agent, hook in (("wf-plan-scout", "brief"), ("wf-plan-ideator", "card"), ("wf-plan-critic", "critic")):
+        check(f"guard: {agent} may not write outside the run folder ({hook} hook)", guard(env, hook, as_agent(write_call(outside), agent)) == "deny")
+    check("guard: ideator may not write the brief through its own hook", guard(env, "card", as_agent(write_call(r / "context-brief.md"), "wf-plan-ideator")) == "deny")
+    check("guard: unknown subagent may not write the brief", guard(env, "plan", as_agent(write_call(r / "context-brief.md"), "wf-plan-unknown")) == "deny")
+    for lead in ("wf-plan-orchestrator", "wf-plan-orchestrator-high"):
+        check(f"guard: {lead} may not write the canary", guard(env, "plan", as_agent(write_call(Path(env["WF_PLAN_RUNS_ROOT"]) / "wf-plan-canary-x.txt"), lead, None)) == "deny")
     check("guard: unknown subagent is denied", guard(env, "plan", as_agent(write_call(r / "patch.json"), "general-purpose")) == "deny")
     check("guard: subagent without agent_type is denied", guard(env, "plan", {**write_call(r / "patch.json"), "agent_id": "agent-1"}) == "deny")
     for lead in ("wf-plan-orchestrator", "wf-plan-orchestrator-high"):
@@ -141,6 +148,12 @@ def main():
         if not info: raise SystemExit
         run = info["run"]
         check("init: no warning under the launcher", info["warnings"] == [], str(info["warnings"]))
+        check("init: wf_build_available is false without wf-build installed", info.get("wf_build_available") is False, out)
+        write(home / ".claude" / "skills" / "wf-build" / "SKILL.md", "x" + chr(10))
+        code, out2, err2 = run_cli(env, repo, "init", "probe-handoff", "--title", "Probe")
+        probe = json.loads(out2) if code == 0 else {}
+        check("init: wf_build_available is true when wf-build is installed", probe.get("wf_build_available") is True, out2 + err2)
+        if probe: run_cli(env, repo, "discard", probe["run"])
         plan = json.loads(Path(info["plan"]).read_text(encoding="utf-8"))
         check("init: harness is claude-code", plan["run"]["harness"] == "claude-code")
         check("init: session key recorded", len(plan["run"]["session_key"]) == 16)
@@ -215,6 +228,10 @@ def main():
         check("finalize: passes", code == 0 and "PASS" in out, out)
         plan = json.loads(Path(info["plan"]).read_text(encoding="utf-8"))
         handoff = plan.get("handoff", {}).get("wf_build", {})
+        check("finalize: plan kind is wf-plan-plan", plan.get("kind") == "wf-plan-plan", str(plan.get("kind")))
+        check("finalize: hand-off key is wf_build", "wf_build" in plan.get("handoff", {}), str(list(plan.get("handoff", {}))))
+        skill_text = (SCRIPTS.parent / "SKILL.md").read_text(encoding="utf-8")
+        check("skill: hand-off names the wf-build commands", "claude --workflow wf-build" in skill_text and "/wf-build --plan" in skill_text)
         check("finalize: hand-off names wf_plan.py", handoff.get("generated_by") == "wf-plan wf_plan.py finalize", str(handoff.get("generated_by")))
         check("finalize: hand-off has one task", len(handoff.get("draft_dag", [])) == 1)
         code, out, _ = apply(env, repo, run, {"goals": ["more"]})
