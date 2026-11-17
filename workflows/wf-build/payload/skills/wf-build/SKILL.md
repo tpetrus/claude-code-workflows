@@ -1,0 +1,61 @@
+---
+name: wf-build
+description: Execute a production software task through a cost-aware verified diamond: expensive orchestration, parallel bounded builders/mechanicals, deterministic verification, independent review, and risk-based approval. Start it with `claude --workflow wf-build`.
+model: opus
+effort: medium
+---
+# wf-build
+
+## Entry gate
+0. This skill runs only in a session started as the `wf-build-orchestrator` agent (`claude --workflow wf-build`, which runs `claude --agent wf-build-orchestrator`). If this session is not that agent, stop before doing anything else and tell the user to restart with `claude --workflow wf-build` and run `/wf-build <task>` there.
+1. Read `~/.claude/wf-build/routing.json`.
+2. Read repo guidance and discover real verification commands.
+3. If `$ARGUMENTS` starts with `--plan "<path>"`, follow Plan intake below; the rest of the arguments is the feature title. Run `python3 ~/.claude/skills/wf-build/scripts/wf_build.py init --title "<title>"` (without the `--plan` part).
+4. Fail closed if applicable commands (install, format, lint, typecheck, unit, integration, build, security, affected-scope) are not explicitly documented in the repository's `CLAUDE.md`, README, contribution guide, package scripts or architecture docs: ask the user to add them. Never invent commands.
+
+## Flow
+INTAKE -> DISCOVER -> SPECIFY -> PLAN -> APPROVAL? -> EXECUTE_DAG -> INTEGRATE -> REVIEW -> REPAIR -> FINAL_GATE -> MERGE_DECISION.
+
+## Plan intake (`--plan`)
+Optional input from the wf-plan workflow: an exported `<slug>.plan.json` of settled requirements. Without `--plan`, nothing here applies.
+1. Run `python3 ~/.claude/skills/wf-plan/scripts/wf_plan.py verify "<path>"`. If wf-plan is not installed, the command fails, or it does not print `VERIFIED`, stop and report; never edit the plan file.
+2. Compare `handoff.wf_build.base_revision` with `git rev-parse HEAD`. If they differ, tell the user which files changed since planning and ask whether to proceed.
+3. Adopt the plan's acceptance criteria and settled decisions as the spec; do not re-brainstorm them. If the plan conflicts with the repository, stop and ask.
+4. Freeze every contract in `freeze_first` before dispatching any worker.
+5. Refine `draft_dag` using `assets/task-template.json` (same keys). `owned_paths` are drafts: re-verify against the current tree. Fill `verify` from the repository command contract, never from the plan. The risk class from this workflow is authoritative and may only be raised.
+6. Record each task with `wf_build.py add-task`, mapping `worker_class` to `role` and `objective` to `title`; carry the remaining fields as extras. `wf_build.py` itself is unchanged.
+
+## Decomposition score
+Delegate only when the task has a stable contract, disjoint write surface, sufficient context, a local verifier, and meaningful critical-path reduction. Keep ambiguous design, shared contracts, and integration with the orchestrator.
+
+## Task packet
+Every task must specify id, role, title, dependencies, base revision, inputs, owned paths, forbidden paths, acceptance criteria, verification command, expected output, retry budget, and escalation triggers. Record it with `wf_build.py add-task` before dispatch.
+
+## Execution
+Launch only ready tasks. Use at most 3 builders, 4 mechanicals, and 5 total subagents. Builders use worktree isolation. Mechanical tasks must be procedural. After each worker, run the designated verifier and record results. Do not trust self-reported success.
+
+## Review
+For R2+, auth, data, migration, payment, infrastructure, concurrency, or external-input changes, run the independent reviewer after integration. Block critical/high-confidence findings. Non-blocking medium/low findings are not fixed inline and not left as prose: while context is hot, record each as a complete follow-up packet with `wf_build.py followup-add` (see Follow-up fast lane).
+
+## Follow-up fast lane
+Nice-to-have cleanups and fixes must stay cheap without losing dependability. The expensive part of a follow-up is re-establishing context, so pay it once: capture a complete task packet (objective, worker_class, owned/forbidden paths, acceptance, verify, risk, origin) in `~/.claude/wf-build/state/followups.json` at the moment the finding surfaces. Later execution is a lookup, not a re-plan.
+
+Qualification (fail closed): fast-lane items must be R0/R1 with a complete packet, a deterministic verifier that fully covers the change, and no shared contract, protected path, dependency, CI, auth, or schema surface. Anything else is ejected to the full workflow.
+
+Execution: no orchestrator re-planning. Deterministic-first: if a formatter, lint --fix, codemod, or generator covers the item, the procedure is that command and the route is mechanical (Haiku low). Items needing local judgment go to a builder at Sonnet low. Group 3-5 items by ownership area into one worker session per batch; drain immediately after the main run while caches are warm. Run affected-scope verification per item and the full configured gates once per batch. Skip adversarial review only where deterministic gates fully cover the change; otherwise use a diff-only Sonnet-medium review.
+
+Escalation and calibration: retry once at tier, then escalate one tier; after a second verification failure, eject to the full workflow. Record outcomes per item in telemetry; if more than 10% of the trailing 20 fast-lane items escalate, raise the default fast-lane route one tier. Routing details live in `routing.json` under `followup_fast_lane`.
+
+Retention: state never grows unbounded. `wf_build.py` prunes resolved follow-ups to the most recent 20 (pending/blocked items are always kept). Cap orchestration telemetry at the trailing 200 entries when writing it. State is scoped per project root and shared across that project's worktrees.
+
+## Merge
+R0/R1 may auto-merge only if configuration is complete, all gates pass, no protected files or shared contracts changed, no dependency/CI/infrastructure/auth/schema change exists, and the change is reversible. R2+ always requires human approval.
+
+## Session hygiene
+One large feature per orchestrator session. After integration and final gates, drain the follow-up fast lane while caches are warm, confirm state and telemetry are written, then end the session; start the next feature in a fresh one. Durable memory lives in git, repository docs and wf-build state files, never in conversation context or session memory: re-read contracts from the repository rather than relying on compaction, and compact only mid-feature when the active DAG would otherwise be lost. Carry cross-feature decisions in repository docs (CLAUDE.md, ADRs).
+
+## Safety
+Never expose secrets, credentials, production data, customer PII or private source to external APIs or logs. Do not read secret-bearing paths. Do not perform destructive production actions.
+
+## Stop
+Stop for missing contract, two repeated failures, scope expansion, unavailable credentials, unresolved high finding, destructive action, or human gate. Produce summary, acceptance status, changed files, commands, reviews, rollout, rollback, and remaining risks.

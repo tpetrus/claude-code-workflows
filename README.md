@@ -14,8 +14,8 @@ one with `claude --workflow <name>`.
 
 | Workflow | What it is for | Start it |
 |---|---|---|
-| [`double-diamond`](workflows/double-diamond/README.md) | **Plan** a feature before building it: discover, define, develop, deliver. Opus decides, cheaper models gather and draft, and a deterministic gate checks the plan. Exports a plan that verified-diamond can build. | `claude --workflow double-diamond` |
-| [`verified-diamond`](workflows/verified-diamond/README.md) | **Build** a change: Opus plans, Sonnet/Haiku build in parallel, real commands decide pass/fail, a reviewer tries to break it, and the risk level decides who approves the merge. | `claude --workflow verified-diamond`, then `/verified-diamond <task>` |
+| [`wf-plan`](workflows/wf-plan/README.md) | **Plan** a feature before building it: discover, define, develop, deliver. Opus decides, cheaper models gather and draft, and a deterministic gate checks the plan. Exports a plan that wf-build can build. | `claude --workflow wf-plan` |
+| [`wf-build`](workflows/wf-build/README.md) | **Build** a change: Opus plans, Sonnet/Haiku build in parallel, real commands decide pass/fail, a reviewer tries to break it, and the risk level decides who approves the merge. | `claude --workflow wf-build`, then `/wf-build <task>` |
 
 ## Quick start
 
@@ -38,10 +38,10 @@ list what is installed.
 
 Run these from the project folder you want to work on.
 
-**Plan a feature** with double-diamond:
+**Plan a feature** with wf-plan:
 
 ```text
-claude --workflow double-diamond          # add --high for risky plans (auth, data, payments, new contracts)
+claude --workflow wf-plan          # add --high for risky plans (auth, data, payments, new contracts)
 > Add CSV export to the report screen
 ```
 
@@ -49,22 +49,22 @@ The orchestrator asks you only the questions it can't answer from the code, comp
 pre-mortem, and checks the plan with a script. At the end it offers to export the plan into your
 repository and prints the command to build it.
 
-**Build a change** with verified-diamond:
+**Build a change** with wf-build:
 
 ```text
-claude --workflow verified-diamond
-> /verified-diamond Add rate limiting to the public API
-> /verified-diamond --plan "docs/plans/csv-export.plan.json" CSV export     # build an exported plan
+claude --workflow wf-build
+> /wf-build Add rate limiting to the public API
+> /wf-build --plan "docs/plans/csv-export.plan.json" CSV export     # build an exported plan
 ```
 
-verified-diamond only works in a repository that documents its real install, lint, test, and build
-commands (see [Preparing a repository](#preparing-a-repository-for-verified-diamond)). If they are
+wf-build only works in a repository that documents its real install, lint, test, and build
+commands (see [Preparing a repository](#preparing-a-repository-for-wf-build)). If they are
 missing, it stops and asks.
 
 **How starting works.** `claude --workflow <name>` starts Claude Code *as that workflow's orchestrator
 agent* (`<name>-orchestrator`), and the agent preloads the workflow's skill (`<name>`). Each skill refuses to
 run without its agent, so this is the one supported way in. Any extra arguments are passed on to Claude
-Code (for example `claude --workflow verified-diamond --model opus`). Every other `claude` command behaves
+Code (for example `claude --workflow wf-build --model opus`). Every other `claude` command behaves
 exactly as before.
 
 Claude Code itself has no `--workflow` option. `install.py --shell` adds a small `claude` function to
@@ -73,7 +73,7 @@ launcher at `~/.claude/scripts/claude-workflow.py`. If you'd rather not change y
 launcher directly:
 
 ```bash
-python3 ~/.claude/scripts/claude-workflow.py double-diamond --high
+python3 ~/.claude/scripts/claude-workflow.py wf-plan --high
 ```
 
 ## What the installer does
@@ -102,14 +102,14 @@ python3 ~/.claude/scripts/claude-workflow.py double-diamond --high
 | `--dry-run` | Show what would change, and write nothing |
 | `--target DIR` | Use a config folder other than `~/.claude` (for testing) |
 
-## Preparing a repository for verified-diamond
+## Preparing a repository for wf-build
 
-verified-diamond installs at the *user* level, but it only works in a repository that tells it how to
+wf-build installs at the *user* level, but it only works in a repository that tells it how to
 verify changes. It fails closed otherwise. Add this to the repository's `CLAUDE.md` (or README), filling
 in **real** commands and using `n/a` only where a step truly doesn't apply:
 
 ```yaml
-verified_diamond:
+wf_build:
   install: "npm ci"
   format: "npm run format:check"
   lint: "npm run lint"
@@ -131,12 +131,12 @@ Or paste this prompt into Claude Code in the repository. It prepares the contrac
 feature code:
 
 ```text
-Prepare this repository for the verified-diamond workflow. Do not implement any feature.
+Prepare this repository for the wf-build workflow. Do not implement any feature.
 
 1. Read the README, package/build manifests, CI config, and any existing CLAUDE.md to find the
    REAL commands for: install, format, lint, typecheck, unit tests, integration tests, build,
    security scan, and an "affected-scope" test command that runs only tests related to changed files.
-2. Add (or update) a `verified_diamond:` YAML block in the project CLAUDE.md with those commands,
+2. Add (or update) a `wf_build:` YAML block in the project CLAUDE.md with those commands,
    plus `low_risk_merge_command` and `protected_paths` (CI workflows, infrastructure, migrations,
    auth, anything secret-bearing you find).
 3. Run each command once to prove it works. Report any that fail or don't exist.
@@ -192,7 +192,7 @@ workflows/<name>/
 
 ### Naming rules
 
-- The folder name is the workflow name: lowercase words joined by hyphens (`double-diamond`).
+- The folder name is the workflow name: lowercase words joined by hyphens (`wf-plan`).
 - The skill is called exactly `<name>`, and its `SKILL.md` frontmatter says `name: <name>`.
 - The lead agent is `<name>-orchestrator`. Every other agent is `<name>-<role>`. File name = frontmatter
   `name`.
@@ -238,8 +238,8 @@ doesn't notice. If you add a rule, add a case for it to `self_test()`.
 
 1. **Copy the shape.** Create `workflows/<name>/` with `workflow.json`, `README.md`, `tests/`, and
    `payload/agents/<name>-orchestrator.md` plus `payload/skills/<name>/SKILL.md`. The two existing
-   workflows are working examples: `verified-diamond` uses the simple `agent` launch, and
-   `double-diamond` uses its own launcher scripts.
+   workflows are working examples: `wf-build` uses the simple `agent` launch, and
+   `wf-plan` uses its own launcher scripts.
 2. **Write the orchestrator agent.** Give it `name: <name>-orchestrator`, a description that ends with
    "Start it with `claude --workflow <name>`.", and preload the skill:
    ```yaml
@@ -292,8 +292,8 @@ doesn't notice. If you add a rule, add a case for it to `self_test()`.
   `~/.claude/<name>/` yourself afterwards if you don't need its state.
 - **From this repository:** uninstall it first wherever it's installed, then delete
   `workflows/<name>/`, remove its row from the table at the top of this README, and run
-  `python3 tools/check.py`. If another workflow refers to it (double-diamond's hand-off mentions
-  verified-diamond, for example), update that workflow too.
+  `python3 tools/check.py`. If another workflow refers to it (wf-plan's hand-off mentions
+  wf-build, for example), update that workflow too.
 
 ## Repository layout
 

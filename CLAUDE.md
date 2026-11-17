@@ -4,7 +4,7 @@ Installable Claude Code workflows. See README.md (including "The workflow format
 Every workflow lives in `workflows/<name>/` and must pass `python3 tools/check.py`. After any change to a workflow,
 run `python3 tools/update_manifest.py` before the checks.
 
-verified_diamond:
+wf_build:
   install: "n/a"
   format: "n/a"
   lint: "python3 -m compileall -q install.py launcher tools workflows"
@@ -19,5 +19,5 @@ verified_diamond:
     - "install.py"
     - "launcher/**"
     - "workflows/*/payload/hooks/**"
-    - "workflows/double-diamond/payload/skills/double-diamond/scripts/guard_write.py"
+    - "workflows/wf-plan/payload/skills/wf-plan/scripts/guard_write.py"
     - "workflows/*/MANIFEST.json"

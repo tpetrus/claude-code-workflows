@@ -3,7 +3,7 @@
 
     python3 tools/check.py                     self-test + format + manifests + every workflows/<name>/tests/*.py
     python3 tools/check.py --install-roundtrip also install, upgrade and uninstall everything in a temp folder
-    python3 tools/check.py double-diamond      only the named workflow(s)
+    python3 tools/check.py wf-plan      only the named workflow(s)
 
 The format is described in the repository README ("The workflow format"). The self-test copies each real
 workflow, breaks one rule at a time, and makes sure the checker notices, so a rule cannot silently stop
@@ -222,57 +222,57 @@ def _json_edit(path, fn):
 
 def self_test():
     """Break each rule in a copy of a real workflow and make sure check_format reports it."""
-    vd, dd = "verified-diamond", "double-diamond"
+    wf_build, wf_plan = "wf-build", "wf-plan"
 
     def P(wf, *parts):
         return os.path.join(wf, "payload", *parts)
 
-    vd_orch = ("agents", "verified-diamond-orchestrator.md")
+    wf_build_orch = ("agents", "wf-build-orchestrator.md")
     cases = [
         # (label, source workflow, name of the copy, mutation, expected message fragment or None for "no failures")
-        ("unchanged verified-diamond copy passes", vd, vd, lambda wf: None, None),
-        ("unchanged double-diamond copy passes", dd, dd, lambda wf: None, None),
-        ("flow-style skills: [x] is accepted", vd, vd,
-         lambda wf: _sub(P(wf, *vd_orch), "skills:\n  - verified-diamond\n", "skills: [verified-diamond]\n"), None),
-        ("folder name", vd, "Bad_Name",
+        ("unchanged wf-build copy passes", wf_build, wf_build, lambda wf: None, None),
+        ("unchanged wf-plan copy passes", wf_plan, wf_plan, lambda wf: None, None),
+        ("flow-style skills: [x] is accepted", wf_build, wf_build,
+         lambda wf: _sub(P(wf, *wf_build_orch), "skills:\n  - wf-build\n", "skills: [wf-build]\n"), None),
+        ("folder name", wf_build, "Bad_Name",
          lambda wf: _json_edit(os.path.join(wf, "workflow.json"), lambda d: d.update(name="Bad_Name")), "folder name"),
-        ("entry gate", vd, vd, lambda wf: _sub(P(wf, "skills", vd, "SKILL.md"), "## Entry gate", "## Start"), "Entry gate"),
-        ("orchestrator description", vd, vd,
-         lambda wf: _sub(P(wf, *vd_orch), " Start it with `claude --workflow verified-diamond`.", ""), "description must end"),
-        ("skill preload", vd, vd, lambda wf: _sub(P(wf, *vd_orch), "skills:\n  - verified-diamond\n", ""), "preload"),
-        ("Agent(...) target exists", dd, dd,
-         lambda wf: _sub(P(wf, "agents", "double-diamond-orchestrator.md"), "Agent(double-diamond-scout,",
-                         "Agent(double-diamond-ghost, double-diamond-scout,"), "Agent(double-diamond-ghost)"),
-        ("hook command file exists (settings fragment)", vd, vd,
-         lambda wf: _sub(P(wf, "settings.fragment.json"), "verified-diamond-policy.py pre", "verified-diamond-missing.py pre"),
+        ("entry gate", wf_build, wf_build, lambda wf: _sub(P(wf, "skills", wf_build, "SKILL.md"), "## Entry gate", "## Start"), "Entry gate"),
+        ("orchestrator description", wf_build, wf_build,
+         lambda wf: _sub(P(wf, *wf_build_orch), " Start it with `claude --workflow wf-build`.", ""), "description must end"),
+        ("skill preload", wf_build, wf_build, lambda wf: _sub(P(wf, *wf_build_orch), "skills:\n  - wf-build\n", ""), "preload"),
+        ("Agent(...) target exists", wf_plan, wf_plan,
+         lambda wf: _sub(P(wf, "agents", "wf-plan-orchestrator.md"), "Agent(wf-plan-scout,",
+                         "Agent(wf-plan-ghost, wf-plan-scout,"), "Agent(wf-plan-ghost)"),
+        ("hook command file exists (settings fragment)", wf_build, wf_build,
+         lambda wf: _sub(P(wf, "settings.fragment.json"), "wf-build-policy.py pre", "wf-build-missing.py pre"),
          "does not install"),
-        ("hook command file exists (agent frontmatter)", dd, dd,
-         lambda wf: _sub(P(wf, "agents", "double-diamond-scout.md"), "scripts/guard_write.py", "scripts/guard_gone.py"),
+        ("hook command file exists (agent frontmatter)", wf_plan, wf_plan,
+         lambda wf: _sub(P(wf, "agents", "wf-plan-scout.md"), "scripts/guard_write.py", "scripts/guard_gone.py"),
          "does not install"),
-        ("legacy_files digest shape", vd, vd,
+        ("legacy_files digest shape", wf_build, wf_build,
          lambda wf: _json_edit(os.path.join(wf, "workflow.json"), lambda d: d["legacy_files"].update({"agents/builder.md": "abc"})),
          "SHA-256"),
-        ("legacy_files path shape", vd, vd,
+        ("legacy_files path shape", wf_build, wf_build,
          lambda wf: _json_edit(os.path.join(wf, "workflow.json"), lambda d: d["legacy_files"].update({"../outside.md": "0" * 64})),
          "plain path"),
-        ("legacy_files must not name a shipped file", vd, vd,
+        ("legacy_files must not name a shipped file", wf_build, wf_build,
          lambda wf: _json_edit(os.path.join(wf, "workflow.json"),
-                               lambda d: d["legacy_files"].update({"agents/verified-diamond-builder.md": "0" * 64})),
+                               lambda d: d["legacy_files"].update({"agents/wf-build-builder.md": "0" * 64})),
          "still ships"),
-        ("stale reference to a retired file", dd, dd,
-         lambda wf: _sub(P(wf, "skills", dd, "SKILL.md"), "## Entry gate", "Run dd-claude.ps1 first.\n\n## Entry gate"),
+        ("stale reference to a retired file", wf_plan, wf_plan,
+         lambda wf: _sub(P(wf, "skills", wf_plan, "SKILL.md"), "## Entry gate", "Run dd-claude.ps1 first.\n\n## Entry gate"),
          "stale reference"),
-        ("stale reference to a retired agent", dd, dd,
-         lambda wf: _sub(P(wf, "skills", dd, "SKILL.md"), "## Entry gate", "Ask dd-scout.\n\n## Entry gate"), "stale reference"),
-        ("launch script forwards arguments", dd, dd,
-         lambda wf: _sub(P(wf, "skills", dd, "scripts", "launch.ps1"), "$args", "$noargs", None), "forward extra arguments"),
-        ("launch script starts the orchestrator", dd, dd,
-         lambda wf: _sub(P(wf, "skills", dd, "scripts", "launch.sh"), "double-diamond-orchestrator", "someone-else", None),
+        ("stale reference to a retired agent", wf_plan, wf_plan,
+         lambda wf: _sub(P(wf, "skills", wf_plan, "SKILL.md"), "## Entry gate", "Ask dd-scout.\n\n## Entry gate"), "stale reference"),
+        ("launch script forwards arguments", wf_plan, wf_plan,
+         lambda wf: _sub(P(wf, "skills", wf_plan, "scripts", "launch.ps1"), "$args", "$noargs", None), "forward extra arguments"),
+        ("launch script starts the orchestrator", wf_plan, wf_plan,
+         lambda wf: _sub(P(wf, "skills", wf_plan, "scripts", "launch.sh"), "wf-plan-orchestrator", "someone-else", None),
          "never starts"),
-        ("payload folders are limited", vd, vd, lambda wf: os.makedirs(P(wf, "scripts")), "not part of the format"),
-        ("agent naming", vd, vd,
-         lambda wf: shutil.copy(P(wf, "agents", "verified-diamond-builder.md"), P(wf, "agents", "builder.md")), "must be named"),
-        ("manifest freshness", vd, vd, lambda wf: open(os.path.join(wf, "README.md"), "a").write("x\n"), MANIFEST_NOISE),
+        ("payload folders are limited", wf_build, wf_build, lambda wf: os.makedirs(P(wf, "scripts")), "not part of the format"),
+        ("agent naming", wf_build, wf_build,
+         lambda wf: shutil.copy(P(wf, "agents", "wf-build-builder.md"), P(wf, "agents", "builder.md")), "must be named"),
+        ("manifest freshness", wf_build, wf_build, lambda wf: open(os.path.join(wf, "README.md"), "a").write("x\n"), MANIFEST_NOISE),
     ]
     real_root, saved = install.WORKFLOWS, failures[:]
     bad = []
@@ -339,7 +339,7 @@ def legacy_retire_check():
     real_root = install.WORKFLOWS
     with tempfile.TemporaryDirectory(prefix="ccw-legacy-") as tmp:
         root, target = os.path.join(tmp, "workflows"), os.path.join(tmp, ".claude")
-        name = "verified-diamond"
+        name = "wf-build"
         shutil.copytree(os.path.join(real_root, name), os.path.join(root, name), ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
         os.makedirs(os.path.join(target, "agents", "olddir"))
         for rel, text in (("agents/old-agent.md", "old\n"), ("agents/olddir/old-edited.md", "edited\n")):
