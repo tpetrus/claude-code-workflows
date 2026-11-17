@@ -12,6 +12,17 @@
     "agent": "wf-build-orchestrator"
   },
   "requires": ["claude", "python3"],
+  "replaces": ["verified-diamond"],
+  "legacy_settings": {
+    "hooks": [
+      "python3 ~/.claude/hooks/verified-diamond-policy.py pre",
+      "python3 ~/.claude/hooks/verified-diamond-policy.py post",
+      "python3 ~/.claude/hooks/verified-diamond-policy.py subagent-start",
+      "python3 ~/.claude/hooks/verified-diamond-policy.py subagent-stop",
+      "python3 ~/.claude/hooks/verified-diamond-policy.py stop"
+    ],
+    "env": { "VERIFIED_DIAMOND_CONFIG": "~/.claude/verified-diamond/routing.json" }
+  },
   "legacy_files": {
     "agents/builder.md": "d865031a39ee512095414a6af911418568302a6c6b1109696ede0b2ef67a478b",
     "agents/explorer.md": "44ceb586a6dbdf62e8fa3c7cbb73372ac05dd98856b97752c0b3656c5758202f",

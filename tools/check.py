@@ -7,7 +7,7 @@
 
 The format is described in the repository README ("The workflow format"). The self-test copies each real
 workflow, breaks one rule at a time, and makes sure the checker notices, so a rule cannot silently stop
-working. Exit 0 when everything passes. Standard library only.
+working. A scan for the retired workflow names runs every time. Exit 0 when everything passes. Standard library only.
 """
 import argparse, contextlib, hashlib, io, json, os, re, shutil, subprocess, sys, tempfile
 
@@ -19,6 +19,8 @@ failures = []
 NAME_RE = re.compile(r"^[a-z][a-z0-9]*(-[a-z0-9]+)*$")
 HOOK_PATH_RE = re.compile(r"(?:\$HOME|~)/\.claude/([^\s'\"]+?\.(?:py|sh|ps1))")
 MANIFEST_NOISE = "MANIFEST.json out of date"
+# Retired-name fixtures used by self_test; stripped from this file before the stale-name scan.
+RETIRED_FIXTURES = ("dd-claude.ps1", "dd-scout")
 
 
 def fail(name, msg):
@@ -174,6 +176,43 @@ def check_format(name):
                 if pattern.search(text):
                     fail(name, f"stale reference: payload/{prel} still mentions '{needle}' (retired in legacy_files)")
 
+    # replaces: names of retired workflows this one supersedes; legacy_settings: their old hooks and env.
+    replaces = meta.get("replaces", [])
+    if not isinstance(replaces, list):
+        fail(name, "replaces must be a list of workflow names")
+        replaces = []
+    for old in replaces:
+        if not (isinstance(old, str) and NAME_RE.match(old)):
+            fail(name, f"replaces entry {old!r} must be a workflow name (lowercase words joined by hyphens)")
+        elif old == name:
+            fail(name, "replaces must not list the workflow's own name")
+        elif old in install.available():
+            fail(name, f"replaces '{old}', which is still a workflow in this repository")
+    if "legacy_settings" in meta:
+        ls = meta["legacy_settings"]
+        if not isinstance(ls, dict):
+            fail(name, "legacy_settings must be an object with 'hooks' and 'env'")
+        else:
+            if set(ls) - {"hooks", "env"}:
+                fail(name, "legacy_settings may only contain 'hooks' and 'env'")
+            hooks = ls.get("hooks", [])
+            if not (isinstance(hooks, list) and all(isinstance(h, str) for h in hooks)):
+                fail(name, "legacy_settings.hooks must be a list of command strings")
+                hooks = []
+            env = ls.get("env", {})
+            if not (isinstance(env, dict) and all(isinstance(k, str) and isinstance(v, str) for k, v in env.items())):
+                fail(name, "legacy_settings.env must be an object of string to string")
+            frag = texts.get("settings.fragment.json")
+            if frag:
+                try:
+                    registered = {h.get("command") for es in json.loads(frag).get("hooks", {}).values()
+                                  for e in es for h in e.get("hooks", [])}
+                except (ValueError, AttributeError):
+                    registered = set()
+                for cmd in hooks:
+                    if cmd in registered:
+                        fail(name, f"legacy_settings.hooks lists '{cmd}', which settings.fragment.json still registers")
+
     # Launch: the orchestrator agent directly, or the workflow's own scripts, which start it and forward arguments.
     launch = meta.get("launch") or {}
     if "agent" in launch:
@@ -199,6 +238,55 @@ def check_format(name):
 
     for p in install.manifest_problems(name):
         fail(name, f"{MANIFEST_NOISE} ({p}); run python3 tools/update_manifest.py")
+
+
+# ---------------------------------------------------------------- stale-name scan
+
+# Built by concatenation so this file does not match its own patterns.
+STALE_ANY_CASE = re.compile("double" + ".?" + "diamond|" + "verified" + ".?" + "diamond", re.I)
+STALE_SHORT = re.compile("\\b" + "dd" + "[-_]|\\b" + "DD" + "_|\\b" + "vd" + "[-_]|\\b" + "VD" + "_|\\b" + "vd" + "\\." + "py\\b")
+STALE_SKIP_DIRS = {".git", "__pycache__", "backups", ".claude"}
+STALE_HISTORY = "docs/plans/rename-workflows/"  # the plan that drove the rename, kept as a historical record
+
+
+def scan_stale_names(root):
+    """Return 'file:line: text' for every retired workflow name under root (allowlist: see the README)."""
+    hits = []
+    for base, dirs, files in os.walk(root):
+        dirs[:] = sorted(d for d in dirs if d not in STALE_SKIP_DIRS)
+        for fn in sorted(files):
+            path = os.path.join(base, fn)
+            rel = os.path.relpath(path, root).replace(os.sep, "/")
+            if rel.startswith(STALE_HISTORY):
+                continue
+            try:
+                with open(path, "rb") as f:
+                    raw = f.read()
+                if b"\0" in raw:
+                    continue
+                text = raw.decode("utf-8")
+            except (OSError, UnicodeDecodeError):
+                continue
+            if rel == "tools/check.py":
+                for fixture in RETIRED_FIXTURES:
+                    text = text.replace(fixture, "")
+            elif re.fullmatch(r"workflows/[^/]+/workflow\.json", rel):
+                try:
+                    data = json.loads(text)
+                    for key in ("legacy_files", "replaces", "legacy_settings"):
+                        data.pop(key, None)
+                    text = json.dumps(data, indent=2)
+                except (ValueError, AttributeError):
+                    pass
+            for n, line in enumerate(text.splitlines(), 1):
+                if STALE_ANY_CASE.search(line) or STALE_SHORT.search(line):
+                    hits.append(f"{rel}:{n}: {line.strip()[:100]}")
+    return hits
+
+
+def check_stale_names():
+    for hit in scan_stale_names(REPO):
+        fail("stale-name", hit)
 
 
 # ---------------------------------------------------------------- self-test of the rules
@@ -260,10 +348,10 @@ def self_test():
                                lambda d: d["legacy_files"].update({"agents/wf-build-builder.md": "0" * 64})),
          "still ships"),
         ("stale reference to a retired file", wf_plan, wf_plan,
-         lambda wf: _sub(P(wf, "skills", wf_plan, "SKILL.md"), "## Entry gate", "Run dd-claude.ps1 first.\n\n## Entry gate"),
+         lambda wf: _sub(P(wf, "skills", wf_plan, "SKILL.md"), "## Entry gate", f"Run {RETIRED_FIXTURES[0]} first.\n\n## Entry gate"),
          "stale reference"),
         ("stale reference to a retired agent", wf_plan, wf_plan,
-         lambda wf: _sub(P(wf, "skills", wf_plan, "SKILL.md"), "## Entry gate", "Ask dd-scout.\n\n## Entry gate"), "stale reference"),
+         lambda wf: _sub(P(wf, "skills", wf_plan, "SKILL.md"), "## Entry gate", f"Ask {RETIRED_FIXTURES[1]}.\n\n## Entry gate"), "stale reference"),
         ("launch script forwards arguments", wf_plan, wf_plan,
          lambda wf: _sub(P(wf, "skills", wf_plan, "scripts", "launch.ps1"), "$args", "$noargs", None), "forward extra arguments"),
         ("launch script starts the orchestrator", wf_plan, wf_plan,
@@ -272,6 +360,25 @@ def self_test():
         ("payload folders are limited", wf_build, wf_build, lambda wf: os.makedirs(P(wf, "scripts")), "not part of the format"),
         ("agent naming", wf_build, wf_build,
          lambda wf: shutil.copy(P(wf, "agents", "wf-build-builder.md"), P(wf, "agents", "builder.md")), "must be named"),
+        ("replaces must be a list", wf_build, wf_build,
+         lambda wf: _json_edit(os.path.join(wf, "workflow.json"), lambda d: d.update(replaces="x")), "replaces must be a list"),
+        ("replaces entry shape", wf_build, wf_build,
+         lambda wf: _json_edit(os.path.join(wf, "workflow.json"), lambda d: d.update(replaces=["Bad_Name"])), "must be a workflow name"),
+        ("replaces not its own name", wf_build, wf_build,
+         lambda wf: _json_edit(os.path.join(wf, "workflow.json"), lambda d: d.update(replaces=["wf-build"])), "own name"),
+        ("replaces not a workflow in this repo", wf_build, wf_build,
+         lambda wf: (shutil.copytree(os.path.join(install.WORKFLOWS, wf_plan), os.path.join(os.path.dirname(wf), wf_plan)),
+                      _json_edit(os.path.join(wf, "workflow.json"), lambda d: d.update(replaces=[wf_plan]))), "still a workflow in this repository"),
+        ("legacy_settings is an object", wf_build, wf_build,
+         lambda wf: _json_edit(os.path.join(wf, "workflow.json"), lambda d: d.update(legacy_settings=[])), "legacy_settings must be an object"),
+        ("legacy_settings keys", wf_build, wf_build,
+         lambda wf: _json_edit(os.path.join(wf, "workflow.json"), lambda d: d["legacy_settings"].update(model="x")), "may only contain"),
+        ("legacy_settings.hooks are strings", wf_build, wf_build,
+         lambda wf: _json_edit(os.path.join(wf, "workflow.json"), lambda d: d["legacy_settings"].update(hooks=[1])), "hooks must be a list"),
+        ("legacy_settings.env is string to string", wf_build, wf_build,
+         lambda wf: _json_edit(os.path.join(wf, "workflow.json"), lambda d: d["legacy_settings"].update(env={"K": 1})), "env must be an object"),
+        ("legacy hook not still registered", wf_build, wf_build,
+         lambda wf: _json_edit(os.path.join(wf, "workflow.json"), lambda d: d["legacy_settings"]["hooks"].append("python3 ~/.claude/hooks/wf-build-policy.py pre")), "still registers"),
         ("manifest freshness", wf_build, wf_build, lambda wf: open(os.path.join(wf, "README.md"), "a").write("x\n"), MANIFEST_NOISE),
     ]
     real_root, saved = install.WORKFLOWS, failures[:]
@@ -314,9 +421,22 @@ def self_test():
     finally:
         install.WORKFLOWS = real_root
         failures[:] = saved
+    # The stale-name scan catches a planted old name, and honors its allowlist.
+    with tempfile.TemporaryDirectory(prefix="ccw-stale-") as tmp:
+        os.makedirs(os.path.join(tmp, "workflows", "x"))
+        for rel, text in (("a.md", "fine\nsee " + "Double" + " Diamond here\n"), ("b.py", "run " + "vd" + ".py\n"),
+                          ("docs/plans/rename-workflows/p.md", "double" + "-diamond\n")):
+            os.makedirs(os.path.dirname(os.path.join(tmp, rel)), exist_ok=True)
+            with open(os.path.join(tmp, rel), "w", encoding="utf-8") as f:
+                f.write(text)
+        with open(os.path.join(tmp, "workflows", "x", "workflow.json"), "w", encoding="utf-8") as f:
+            json.dump({"name": "x", "replaces": ["double" + "-diamond"], "summary": "ok"}, f, indent=2)
+        hits = scan_stale_names(tmp)
+        if not (len(hits) == 2 and hits[0].startswith("a.md:2:") and hits[1].startswith("b.py:1:")):
+            bad.append(f"stale-name scan: expected hits at a.md:2 and b.py:1 only, got {hits}")
     for b in bad:
         fail("self-test", b)
-    print(f"checker self-test: {'ok' if not bad else 'FAILED'} ({len(cases) + 1} cases)")
+    print(f"checker self-test: {'ok' if not bad else 'FAILED'} ({len(cases) + 2} cases)")
 
 
 # ---------------------------------------------------------------- tests and install round trip
@@ -364,6 +484,111 @@ def legacy_retire_check():
             fail("roundtrip", "an unmodified legacy file was not retired to backups")
         if not os.path.exists(os.path.join(target, "agents", "olddir", "old-edited.md")):
             fail("roundtrip", "an edited legacy file was removed")
+
+
+def migration_check(names):
+    """A fake old install of each replaced workflow is retired when the new workflows are installed."""
+    new = {n: install.load_meta(n) for n in names if install.load_meta(n).get("replaces")}
+    if not new:
+        return
+    sha = lambda b: hashlib.sha256(b).hexdigest()  # noqa: E731
+    with tempfile.TemporaryDirectory(prefix="ccw-migrate-") as tmp:
+        target = os.path.join(tmp, ".claude")
+        os.makedirs(target)
+
+        def put(rel, text):
+            path = os.path.join(target, *rel.split("/"))
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8", newline="\n") as f:
+                f.write(text)
+
+        launcher = open(install.LAUNCHER_SRC, encoding="utf-8").read()
+        claude_md = "# Mine\nkeep me\n"
+        user_hook = {"matcher": "", "hooks": [{"type": "command", "command": "echo user-hook"}]}
+        settings = {"model": "sonnet", "env": {"USER_KEY": "1"}, "hooks": {"PreToolUse": [user_hook]}}
+        old_names, legacy_cmds, legacy_env = [], [], {}
+        for meta in new.values():
+            ls = meta.get("legacy_settings") or {}
+            for i, cmd in enumerate(ls.get("hooks", [])):
+                event = "Stop" if i == 0 else "PreToolUse"  # Stop holds only a legacy hook: must disappear entirely
+                settings["hooks"].setdefault(event, []).append({"matcher": "", "hooks": [{"type": "command", "command": cmd}]})
+                legacy_cmds.append(cmd)
+            legacy_env.update(ls.get("env", {}))
+            old_names += meta["replaces"]
+        settings["env"].update(legacy_env)
+        edited, retired = {}, {}
+        for old in old_names:
+            retired[old] = {f"agents/{old}-x.md": "agent\n", f"skills/{old}/SKILL.md": "skill\n", f"hooks/{old}-policy.py": "hook\n"}
+            edited[old] = f"agents/{old}-edited.md"
+            files = [{"path": rel, "sha256": sha(text.encode())} for rel, text in retired[old].items()]
+            for rel, text in retired[old].items():
+                put(rel, text)
+            put(edited[old], "user edited this\n")
+            files.append({"path": edited[old], "sha256": sha(b"original\n")})
+            files.append({"path": install.LAUNCHER_REL, "sha256": sha(launcher.encode()), "shared": True})
+            put(install.LAUNCHER_REL, launcher)
+            put(f"{old}/workflow.json", json.dumps({"name": old, "version": "1.0.0", "summary": "old", "usage": []}))
+            put(f"{old}/MANIFEST.json", json.dumps({"name": old, "version": "1.0.0", "files": files}))
+            put(f"{old}/state/keep.json", "{}\n")
+            claude_md += f"\n<!-- BEGIN {old} -->\nold contract\n<!-- END {old} -->\n"
+        put("CLAUDE.md", claude_md)
+        put("settings.json", json.dumps(settings, indent=2) + "\n")
+
+        def snapshot():
+            return {os.path.relpath(os.path.join(b, f), target): sha(open(os.path.join(b, f), "rb").read())
+                    for b, _, fs in os.walk(target) for f in fs}
+
+        def run(*args):
+            return subprocess.run([sys.executable, "-B", os.path.join(REPO, "install.py"), *names, "--target", target, *args],
+                                  capture_output=True, text=True, encoding="utf-8")
+
+        before = snapshot()
+        p = run("--dry-run")
+        if p.returncode != 0 or snapshot() != before:
+            return fail("roundtrip", f"migration: --dry-run failed or changed files:\n{p.stdout}{p.stderr}")
+        p = run()
+        if p.returncode != 0:
+            return fail("roundtrip", f"migration: install failed:\n{p.stdout}{p.stderr}")
+        backups = [os.path.join(b, f) for b, _, fs in os.walk(os.path.join(target, "backups")) for f in fs]
+        for old in old_names:
+            for rel, text in retired[old].items():
+                if os.path.exists(os.path.join(target, *rel.split("/"))):
+                    fail("roundtrip", f"migration: old file {rel} was not retired")
+                if not any(b.endswith(os.path.basename(rel)) and open(b, encoding="utf-8").read() == text for b in backups):
+                    fail("roundtrip", f"migration: old file {rel} was not backed up")
+            if open(os.path.join(target, *edited[old].split("/")), encoding="utf-8").read() != "user edited this\n":
+                fail("roundtrip", f"migration: modified old file {edited[old]} was not kept")
+            for rec in ("workflow.json", "MANIFEST.json"):
+                if os.path.exists(os.path.join(target, old, rec)):
+                    fail("roundtrip", f"migration: old record {old}/{rec} was not removed")
+            if not os.path.isfile(os.path.join(target, old, "state", "keep.json")):
+                fail("roundtrip", f"migration: {old}/state/keep.json was not kept")
+            if f"kept: {os.path.join(target, old)}" not in p.stdout:
+                fail("roundtrip", f"migration: install did not say it kept {old}/")
+        md = open(os.path.join(target, "CLAUDE.md"), encoding="utf-8").read()
+        if "keep me" not in md or any(f"BEGIN {old}" in md or "old contract" in md for old in old_names):
+            fail("roundtrip", f"migration: CLAUDE.md not cleaned correctly:\n{md}")
+        s = json.load(open(os.path.join(target, "settings.json"), encoding="utf-8-sig"))
+        left = [h.get("command") for es in s.get("hooks", {}).values() for e in es for h in e.get("hooks", [])]
+        if any(c in left for c in legacy_cmds) or any(k in s.get("env", {}) for k in legacy_env):
+            fail("roundtrip", f"migration: legacy hooks or env remain in settings.json: {s}")
+        if "echo user-hook" not in left or s.get("env", {}).get("USER_KEY") != "1" or s.get("model") != "sonnet":
+            fail("roundtrip", f"migration: the user's settings were changed: {s}")
+        if legacy_cmds and "Stop" in s.get("hooks", {}) and not any("echo" in c for c in left if c):
+            fail("roundtrip", "migration: an empty hook event was not dropped")
+        readme = open(os.path.join(target, "README.md"), encoding="utf-8").read()
+        for n in new:
+            if f"**{n}**" not in readme:
+                fail("roundtrip", f"migration: README.md does not list {n}")
+        for old in old_names:
+            if old in readme:
+                fail("roundtrip", f"migration: README.md still mentions {old}")
+        if not os.path.isfile(os.path.join(target, *install.LAUNCHER_REL.split("/"))):
+            fail("roundtrip", "migration: the shared launcher was removed")
+        for n in names:
+            for _, rel in install.install_map(n):
+                if not os.path.isfile(os.path.join(target, *rel.split("/"))):
+                    fail("roundtrip", f"migration: new file {rel} is missing")
 
 
 def roundtrip(names):
@@ -463,6 +688,7 @@ def roundtrip(names):
         if settings.get("hooks"):
             fail("roundtrip", f"uninstall left hooks in settings.json: {settings['hooks']}")
     legacy_retire_check()
+    migration_check(names)
     print(f"  install/uninstall round trip: {'ok' if len(failures) == before else 'FAILED'}")
 
 
@@ -470,6 +696,7 @@ def main(argv):
     names = [a for a in argv if not a.startswith("--")] or install.available()
     self_test()
     check_tree()
+    check_stale_names()
     for n in names:
         check_format(n)
     print(f"format and manifests: {'ok' if not failures else 'FAILED'} ({', '.join(names)})")
