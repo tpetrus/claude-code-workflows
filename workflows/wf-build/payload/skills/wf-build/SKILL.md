@@ -1,6 +1,6 @@
 ---
 name: wf-build
-description: Execute a production software task through a cost-aware verified diamond: expensive orchestration, parallel bounded builders/mechanicals, deterministic verification, independent review, and risk-based approval. Start it with `claude --workflow wf-build`.
+description: Execute a production software task through the full wf-build workflow: expensive orchestration, parallel bounded builders/mechanicals, deterministic verification, independent review, and risk-based approval. Start it with `claude --workflow wf-build`.
 model: opus
 effort: medium
 ---

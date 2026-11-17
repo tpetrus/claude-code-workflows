@@ -1,6 +1,6 @@
 # wf-plan for Claude Code
 
-A feature-**planning** workflow for Claude Code. It turns a feature idea into a validated, decision-recorded plan using the wf-plan:
+A feature-**planning** workflow for Claude Code. It turns a feature idea into a validated, decision-recorded plan through four phases:
 - **Discover** and **Define**: diverge, then converge on the problem.
 - **Develop** and **Deliver**: diverge, then converge on the solution.
 

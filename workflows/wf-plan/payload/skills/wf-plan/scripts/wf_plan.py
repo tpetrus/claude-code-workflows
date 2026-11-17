@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""wf-plan plan CLI: run workspace, patch protocol, artifact collection, validation, rendering, export and the
+"""wf-plan CLI: run workspace, patch protocol, artifact collection, validation, rendering, export and the
 wf-build hand-off. Standard library only. Every run lives in its own temp folder and is resumable only by the session that created it."""
 import copy, os, re, shutil, stat, sys, time
 from types import SimpleNamespace

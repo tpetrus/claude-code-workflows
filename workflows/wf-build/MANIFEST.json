@@ -16,7 +16,7 @@
     },
     {
       "path": "agents/wf-build-orchestrator.md",
-      "sha256": "ada05e1f8b559ea54a7a8b273cd328b77f8333a9197510fbeda5e7f4e3a0647f"
+      "sha256": "15bcdd4c4cb3b7ffc5b91ff4846e8bde2f9986fbaa50704b83188d34ad93c7a2"
     },
     {
       "path": "agents/wf-build-reviewer.md",
@@ -28,11 +28,11 @@
     },
     {
       "path": "skills/wf-build/SKILL.md",
-      "sha256": "e84741012a41bb201e1dfb6e8b197be92d0a2779f4b9bab651f6a758ee425a15"
+      "sha256": "965350b4374727a82b8261f81e19e9fe15261f153dc32ae592488c4310e985c8"
     },
     {
       "path": "skills/wf-build/assets/followup-packet.json",
-      "sha256": "49c5c8b93ea7083701b3981e83258066c314e755e28bfcc88f729900a7698d8c"
+      "sha256": "ed6037795000237e00b1bd918159a60ac5fe055003356fe1c5742ee47f7d6e8a"
     },
     {
       "path": "skills/wf-build/assets/task-graph.yaml",
@@ -44,15 +44,15 @@
     },
     {
       "path": "skills/wf-build/scripts/wf_build.py",
-      "sha256": "26f1d80690632524cd82278f69d6016274de8f30d86ba8634fba57837726580f"
+      "sha256": "9713a2373569499941be24d2c0cb804c8b22cdb7813ccffbf277762e2f1e9cd2"
     },
     {
       "path": "wf-build/README.md",
-      "sha256": "be81146b9d2936c209df56ed5862bbabff828ad812bda59320ee53df8e684453"
+      "sha256": "aedfb49d72bc6f68ebe47405bf0ba61592fa4b31ebf6976d07fca8c9951c0949"
     },
     {
       "path": "wf-build/docs/WHEN-TO-USE.md",
-      "sha256": "fa6a5731740ad037c542c37c75522bda7c8b1c69200ff69f949af2df91adc2f6"
+      "sha256": "420bed6bfb66ed6786cc9b568e3c154156fc6fa998ec653ab09060d6f8a7a526"
     },
     {
       "path": "wf-build/docs/evaluation/README.md",

@@ -56,7 +56,7 @@ def main():
   f=load_fup(); t=json.loads(z.json); required=['id','objective','worker_class','owned_paths','forbidden_paths','acceptance','verify','risk']
   miss=[k for k in required if k not in t]
   if miss: raise SystemExit('Missing follow-up fields: '+','.join(miss))
-  if t['risk'] not in ('R0','R1'): raise SystemExit('R2+ follow-ups must run the full verified diamond, not the fast lane')
+  if t['risk'] not in ('R0','R1'): raise SystemExit('R2+ follow-ups must run the full wf-build workflow, not the fast lane')
   if not t['verify'] or not t['owned_paths']: raise SystemExit('fast-lane packet requires non-empty owned_paths and verify')
   if any(q['id']==t['id'] for q in f['items']): raise SystemExit('Duplicate follow-up id')
   t.setdefault('lane','fast'); t.setdefault('status','pending'); t.setdefault('retry_limit',1); f['items'].append(t); save_fup(f)

@@ -15,7 +15,7 @@ claude --workflow wf-build          # starts Claude Code as wf-build-orchestrato
 
 > **Fail-closed by design.** If your repo doesn't document its real install/lint/test/build commands, the pipeline stops and asks you to add them. It never invents commands.
 
-## The idea: a diamond
+## The idea: fan out, then converge
 
 Work fans out from one planner into parallel workers, then funnels back through verification and review into one decision.
 
@@ -154,7 +154,7 @@ flowchart LR
     X -->|"a command does it<br/>(formatter, codemod)"| P["Run the command<br/>no agent"]
     X -->|"trivial, single-file"| DL["<b>Direct lane</b><br/>claude --model haiku"]
     X -->|"captured R0/R1 cleanup<br/>with deterministic verifier"| FL["<b>Follow-up fast lane</b><br/>batched 3-5, Haiku/Sonnet-low"]
-    X -->|"substantive, multi-file"| FD["<b>Full diamond</b><br/>claude --workflow wf-build"]
+    X -->|"substantive, multi-file"| FD["<b>Full workflow</b><br/>claude --workflow wf-build"]
 ```
 
 **Follow-up fast lane.** Reviewers find nice-to-have cleanups. Instead of fixing them inline or leaving them as prose, the orchestrator records each as a complete task packet (`wf_build.py followup-add`) while context is hot. After the main run, qualifying packets (R0/R1, verifier fully covers the change, no protected path or shared contract) are drained in batches of 3-5 with no re-planning. Anything that fails qualification, or fails verification twice, is ejected to the full diamond.
