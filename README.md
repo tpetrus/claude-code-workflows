@@ -206,6 +206,11 @@ workflows/<name>/
 - Launcher scripts must start `<name>-orchestrator` and pass on every extra argument.
 - After a rename, list the old file in `legacy_files`, and make sure the old name appears nowhere in
   the payload (the checker looks).
+- Retired workflow names (the old long names and their short file prefixes) must appear nowhere in the
+  repository. `python3 tools/check.py` scans every text file and reports `file:line`. The only places
+  allowed to keep an old name are the `legacy_files`, `replaces` and `legacy_settings` fields of a
+  `workflow.json`, the retired-name fixtures in `tools/check.py`, and the folder
+  `docs/plans/rename-workflows/` (a historical record).
 
 `tools/check.py` also tests itself: it copies each workflow, breaks one rule at a time, and fails if it
 doesn't notice. If you add a rule, add a case for it to `self_test()`.
@@ -222,7 +227,12 @@ doesn't notice. If you add a rule, add a case for it to `self_test()`.
   "usage": ["claude --workflow my-workflow", "then: /my-workflow <task>"],
   "launch": { "agent": "my-workflow-orchestrator" },
   "requires": ["claude", "python3"],
-  "legacy_files": { "agents/old-name.md": "<sha256 of the old file>" }
+  "legacy_files": { "agents/old-name.md": "<sha256 of the old file>" },
+  "replaces": ["old-workflow"],
+  "legacy_settings": {
+    "hooks": ["python3 ~/.claude/hooks/old-workflow-policy.py pre"],
+    "env": { "OLD_WORKFLOW_CONFIG": "~/.claude/old-workflow/config.json" }
+  }
 }
 ```
 
@@ -233,6 +243,15 @@ doesn't notice. If you add a rule, add a case for it to `self_test()`.
 - `legacy_files` lists files an older version installed that this version no longer ships, with the
   SHA-256 they had. On install, each one is moved to backups if it is still unmodified. Use this whenever
   you rename or move an installed file, so users are not left with stale agents.
+- `replaces` (optional) lists the names of older workflows this one supersedes. When this workflow is
+  installed, the installer retires the old install: it moves every unmodified file in the old
+  `~/.claude/<old>/MANIFEST.json` to backups, removes the old record files (so the old workflow is no
+  longer listed), and removes the old `CLAUDE.md` block. Files you edited and the old `state/` folder
+  are kept, and the installer says so. The shared launcher is never touched.
+- `legacy_settings` (optional) lists what the old workflow added to `settings.json`: `hooks` (the exact
+  hook commands) and `env` (key and value). The installer removes matching hook entries and env keys
+  that still have the listed value, even if the old install record is already gone. A command listed
+  here must not still be in this workflow's `settings.fragment.json`.
 
 ## Creating a new workflow
 
@@ -275,6 +294,10 @@ doesn't notice. If you add a rule, add a case for it to `self_test()`.
 3. If you renamed, moved, or deleted an installed file, add its old path and old SHA-256 to
    `legacy_files` so the installer cleans it up for existing users. Get the hash with
    `git show HEAD:workflows/<name>/payload/<old path> | sha256sum`.
+   If you renamed the whole workflow, rename its folder and everything named after it, add the old name
+   to `replaces`, and list the old settings entries in `legacy_settings` (copy the exact commands from
+   the old `settings.fragment.json`). Then run `python3 tools/check.py --install-roundtrip`: it builds a
+   fake old install and checks that installing the new workflow retires it cleanly.
 4. Regenerate the manifest and run the checks:
    ```bash
    python3 tools/update_manifest.py <name>
