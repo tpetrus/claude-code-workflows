@@ -20,7 +20,7 @@ NAME_RE = re.compile(r"^[a-z][a-z0-9]*(-[a-z0-9]+)*$")
 HOOK_PATH_RE = re.compile(r"(?:\$HOME|~)/\.claude/([^\s'\"]+?\.(?:py|sh|ps1))")
 MANIFEST_NOISE = "MANIFEST.json out of date"
 # Retired-name fixtures used by self_test; stripped from this file before the stale-name scan.
-RETIRED_FIXTURES = ("dd-claude.ps1", "dd-scout")
+RETIRED_FIXTURES = ("dd" + "-claude.ps1", "dd" + "-scout")
 
 
 def fail(name, msg):
@@ -244,16 +244,27 @@ def check_format(name):
 
 # Built by concatenation so this file does not match its own patterns.
 STALE_ANY_CASE = re.compile("double" + ".?" + "diamond|" + "verified" + ".?" + "diamond", re.I)
-STALE_SHORT = re.compile("\\b" + "dd" + "[-_]|\\b" + "DD" + "_|\\b" + "vd" + "[-_]|\\b" + "VD" + "_|\\b" + "vd" + "\\." + "py\\b")
-STALE_SKIP_DIRS = {".git", "__pycache__", "backups", ".claude"}
+STALE_SHORT = re.compile("\\b" + "dd" + "[-_]|\\b" + "vd" + "[-_]|\\b" + "vd" + "\\." + "py\\b", re.I)
+STALE_SKIP_DIRS = {".git", "__pycache__"}
+STALE_SKIP_ROOT_DIRS = {"backups", ".claude"}  # skipped only directly under the repo root
 STALE_HISTORY = "docs/plans/rename-workflows/"  # the plan that drove the rename, kept as a historical record
 
 
 def scan_stale_names(root):
     """Return 'file:line: text' for every retired workflow name under root (allowlist: see the README)."""
     hits = []
+    def stale(s):
+        return STALE_ANY_CASE.search(s) or STALE_SHORT.search(s)
+
     for base, dirs, files in os.walk(root):
-        dirs[:] = sorted(d for d in dirs if d not in STALE_SKIP_DIRS)
+        at_root = os.path.abspath(base) == os.path.abspath(root)
+        dirs[:] = sorted(d for d in dirs if d not in STALE_SKIP_DIRS and not (at_root and d in STALE_SKIP_ROOT_DIRS))
+        for fn in sorted(dirs + files):
+            rel = os.path.relpath(os.path.join(base, fn), root).replace(os.sep, "/")
+            if rel.startswith(STALE_HISTORY) or (rel + "/").startswith(STALE_HISTORY):
+                continue
+            if stale(fn):
+                hits.append(f"{rel}: old name in the path")
         for fn in sorted(files):
             path = os.path.join(base, fn)
             rel = os.path.relpath(path, root).replace(os.sep, "/")
@@ -262,14 +273,18 @@ def scan_stale_names(root):
             try:
                 with open(path, "rb") as f:
                     raw = f.read()
-                if b"\0" in raw:
-                    continue
-                text = raw.decode("utf-8")
-            except (OSError, UnicodeDecodeError):
+            except OSError:
                 continue
+            if b"\0" in raw[:8192]:
+                continue  # a real binary
+            text = raw.decode("utf-8", errors="replace")
             if rel == "tools/check.py":
-                for fixture in RETIRED_FIXTURES:
-                    text = text.replace(fixture, "")
+                def strip_fixtures(ln):
+                    for fixture in RETIRED_FIXTURES:
+                        ln = ln.replace(fixture, "")
+                    return ln
+
+                text = "\n".join(strip_fixtures(ln) if "_sub(" in ln else ln for ln in text.split("\n"))
             elif re.fullmatch(r"workflows/[^/]+/workflow\.json", rel):
                 try:
                     data = json.loads(text)
@@ -279,7 +294,7 @@ def scan_stale_names(root):
                 except (ValueError, AttributeError):
                     pass
             for n, line in enumerate(text.splitlines(), 1):
-                if STALE_ANY_CASE.search(line) or STALE_SHORT.search(line):
+                if stale(line):
                     hits.append(f"{rel}:{n}: {line.strip()[:100]}")
     return hits
 
@@ -434,6 +449,24 @@ def self_test():
         hits = scan_stale_names(tmp)
         if not (len(hits) == 2 and hits[0].startswith("a.md:2:") and hits[1].startswith("b.py:1:")):
             bad.append(f"stale-name scan: expected hits at a.md:2 and b.py:1 only, got {hits}")
+        # Hardening: undecodable text, old names in paths, uppercase short prefixes, nested .claude; root .claude/backups stay skipped.
+        extra = (("latin1.txt", b"caf\xe9 \xff " + "verified".encode() + b"-" + "diamond".encode() + b"\n"),
+                 ("nul.bin", b"\0" + "double".encode() + b"-" + "diamond".encode() + b"\n"),
+                 ("notes-" + "double" + "-" + "diamond" + ".txt", b"clean\n"),
+                 ("upper.md", ("DD" + "-scout\n").encode()),
+                 ("sub/.claude/n.md", ("double" + "-" + "diamond\n").encode()),
+                 ("backups/ok.md", ("double" + "-" + "diamond\n").encode()),
+                 (".claude/ok.md", ("double" + "-" + "diamond\n").encode()))
+        for rel, data in extra:
+            os.makedirs(os.path.dirname(os.path.join(tmp, rel)), exist_ok=True)
+            with open(os.path.join(tmp, rel), "wb") as f:
+                f.write(data)
+        hits = scan_stale_names(tmp)
+        for want in ("latin1.txt:1:", "notes-", "upper.md:1:", "sub/.claude/n.md:1:"):
+            if not any(h.startswith(want) for h in hits):
+                bad.append(f"stale-name scan: expected a hit starting '{want}', got {hits}")
+        if len(hits) != 6 or any(h.startswith(("nul.bin", "backups/", ".claude/")) for h in hits):
+            bad.append(f"stale-name scan: expected exactly 6 hits (a real binary and root .claude/backups skipped), got {hits}")
     for b in bad:
         fail("self-test", b)
     print(f"checker self-test: {'ok' if not bad else 'FAILED'} ({len(cases) + 2} cases)")
@@ -551,6 +584,8 @@ def migration_check(names):
                                   capture_output=True, text=True, encoding="utf-8")
 
         before = snapshot()
+        conflict_target = os.path.join(tmp, "conflict", ".claude")
+        shutil.copytree(target, conflict_target)
         p = run("--dry-run")
         if p.returncode != 0 or snapshot() != before:
             return fail("roundtrip", f"migration: --dry-run failed or changed files:\n{p.stdout}{p.stderr}")
@@ -599,6 +634,44 @@ def migration_check(names):
                     fail("roundtrip", f"migration: new file {rel} is missing")
         if not os.path.isfile(victim):
             fail("roundtrip", "migration: a record entry outside the config dir deleted a file")
+
+        # (a) A second install right after the migration changes nothing.
+        p = run()
+        if p.returncode != 0 or p.stdout.count(" 0 added, 0 overwritten") != len(names):
+            fail("roundtrip", f"migration: a second install was not a no-op:\n{p.stdout}{p.stderr}")
+
+        # (b) Uninstalling the new workflows leaves no legacy hooks or env and keeps the user's settings.
+        p = run("--uninstall")
+        if p.returncode != 0:
+            fail("roundtrip", f"migration: uninstall failed:\n{p.stdout}{p.stderr}")
+        s = json.load(open(os.path.join(target, "settings.json"), encoding="utf-8-sig"))
+        left = [h.get("command") for es in s.get("hooks", {}).values() for e in es for h in e.get("hooks", [])]
+        if any(c in left for c in legacy_cmds) or any(k in s.get("env", {}) for k in legacy_env):
+            fail("roundtrip", f"migration: legacy hooks or env came back after uninstall: {s}")
+        if "echo user-hook" not in left or s.get("env", {}).get("USER_KEY") != "1" or s.get("model") != "sonnet":
+            fail("roundtrip", f"migration: uninstall changed the user's settings: {s}")
+
+        # (c) An old install plus a user-edited new-workflow file: install stops before writing anything.
+        for n in new:
+            rel = next(r for _, r in install.install_map(n))
+            conflict_file = os.path.join(conflict_target, *rel.split("/"))
+            os.makedirs(os.path.dirname(conflict_file), exist_ok=True)
+            with open(conflict_file, "w", encoding="utf-8", newline="\n") as f:
+                f.write("user edited a new-workflow file\n")
+
+        def tree(root):
+            return {os.path.relpath(os.path.join(b, f), root): sha(open(os.path.join(b, f), "rb").read())
+                    for b, _, fs in os.walk(root) for f in fs}
+
+        files_before = tree(conflict_target)
+        p = subprocess.run([sys.executable, "-B", os.path.join(REPO, "install.py"), *new, "--target", conflict_target],
+                           capture_output=True, text=True, encoding="utf-8")
+        if "conflict:" not in p.stdout or tree(conflict_target) != files_before:
+            fail("roundtrip", f"migration: a conflicting install wrote files or did not stop:\n{p.stdout}{p.stderr}")
+        for old in old_names:
+            for rec in ("workflow.json", "MANIFEST.json"):
+                if not os.path.isfile(os.path.join(conflict_target, old, rec)):
+                    fail("roundtrip", f"migration: a conflicting install removed the old record {old}/{rec}")
 
         # An unreadable old record never crashes the install and is kept, so a later install can retry.
         target2 = os.path.join(tmp, "unreadable", ".claude")
