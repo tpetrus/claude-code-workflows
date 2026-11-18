@@ -157,7 +157,7 @@ flowchart LR
     X -->|"substantive, multi-file"| FD["<b>Full workflow</b><br/>claude --workflow wf-build"]
 ```
 
-**Follow-up fast lane.** Reviewers find nice-to-have cleanups. Instead of fixing them inline or leaving them as prose, the orchestrator records each as a complete task packet (`wf_build.py followup-add`) while context is hot. After the main run, qualifying packets (R0/R1, verifier fully covers the change, no protected path or shared contract) are drained in batches of 3-5 with no re-planning. Anything that fails qualification, or fails verification twice, is ejected to the full diamond.
+**Follow-up fast lane.** Reviewers find nice-to-have cleanups. Instead of fixing them inline or leaving them as prose, the orchestrator records each as a complete task packet (`wf_build.py followup-add`) while context is hot. After the main run, qualifying packets (R0/R1, verifier fully covers the change, no protected path or shared contract) are drained in batches of 3-5 with no re-planning. Anything that fails qualification, or fails verification twice, is ejected to the full wf-build workflow.
 
 See [`docs/WHEN-TO-USE.md`](docs/WHEN-TO-USE.md) for the full decision guide and [`docs/model-economics.md`](docs/model-economics.md) for the cost/quality rationale (estimates, not benchmarks).
 
