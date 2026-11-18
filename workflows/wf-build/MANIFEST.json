@@ -1,0 +1,74 @@
+{
+  "name": "wf-build",
+  "version": "2.0.0",
+  "files": [
+    {
+      "path": "agents/wf-build-builder.md",
+      "sha256": "8c3305ab6f26f553040ab5c7766303df8f719a2d045f94e45276b7a6f4b2c632"
+    },
+    {
+      "path": "agents/wf-build-explorer.md",
+      "sha256": "6515918800b2cdd1bb0006baf7c2cdeba8142f3babc9b49d9adfa05881c18982"
+    },
+    {
+      "path": "agents/wf-build-mechanical.md",
+      "sha256": "38627830e0c0bd88e87fe560cab71c0704568580332cdd489f16ba77060a3f11"
+    },
+    {
+      "path": "agents/wf-build-orchestrator.md",
+      "sha256": "15bcdd4c4cb3b7ffc5b91ff4846e8bde2f9986fbaa50704b83188d34ad93c7a2"
+    },
+    {
+      "path": "agents/wf-build-reviewer.md",
+      "sha256": "2dc4443baa818a3300c76c5a40835aebe113205259b50cb002fccafa02625583"
+    },
+    {
+      "path": "hooks/wf-build-policy.py",
+      "sha256": "907aa069c131107f348d4191c9c2b2a0e5f312601bb7718e00d03fc70bb0ee51"
+    },
+    {
+      "path": "skills/wf-build/SKILL.md",
+      "sha256": "965350b4374727a82b8261f81e19e9fe15261f153dc32ae592488c4310e985c8"
+    },
+    {
+      "path": "skills/wf-build/assets/followup-packet.json",
+      "sha256": "ed6037795000237e00b1bd918159a60ac5fe055003356fe1c5742ee47f7d6e8a"
+    },
+    {
+      "path": "skills/wf-build/assets/task-graph.yaml",
+      "sha256": "0acd7bc875fbf60a786f2c92e660316a2324a374117f3316d2b9751ac8e9b454"
+    },
+    {
+      "path": "skills/wf-build/assets/task-template.json",
+      "sha256": "46d175f30f754cc2646e53109e41b91d8df6712cbba797f573d503a081206678"
+    },
+    {
+      "path": "skills/wf-build/scripts/wf_build.py",
+      "sha256": "9713a2373569499941be24d2c0cb804c8b22cdb7813ccffbf277762e2f1e9cd2"
+    },
+    {
+      "path": "wf-build/README.md",
+      "sha256": "46d33dceb425196ab119b5719cf472e8d5d0cdd319af77d2dd76266d82aa329d"
+    },
+    {
+      "path": "wf-build/docs/WHEN-TO-USE.md",
+      "sha256": "420bed6bfb66ed6786cc9b568e3c154156fc6fa998ec653ab09060d6f8a7a526"
+    },
+    {
+      "path": "wf-build/docs/evaluation/README.md",
+      "sha256": "af86683158d8c254ddbdde9f43046654196b52082aec56e437b205e3a0680a07"
+    },
+    {
+      "path": "wf-build/docs/model-economics.md",
+      "sha256": "72d4e04959e36fedc1b17db00a92acdddba5c9cb9a38527b094d71f5380bb461"
+    },
+    {
+      "path": "wf-build/routing.json",
+      "sha256": "5b8e3318484b886758826b79624cac8ebff20e5fc137b467cafc4367efdb2367"
+    },
+    {
+      "path": "wf-build/workflow.json",
+      "sha256": "4bb15d4b042fef2d4297409304e05bbfee0c575ceb87887221ce1e55e29a6c15"
+    }
+  ]
+}

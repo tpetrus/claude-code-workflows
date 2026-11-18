@@ -1,0 +1,70 @@
+{
+  "name": "wf-plan",
+  "version": "3.0.0",
+  "files": [
+    {
+      "path": "agents/wf-plan-critic.md",
+      "sha256": "c1a1d56af513445f0d04a24f04d81a40d79fb1efb5f09d452d6f2d62b24bdacf"
+    },
+    {
+      "path": "agents/wf-plan-ideator.md",
+      "sha256": "d978be7d5d890d9daa3bbe0dfc5a3ad38929c0a72bce27fc688b88bc77811403"
+    },
+    {
+      "path": "agents/wf-plan-orchestrator-high.md",
+      "sha256": "ccc20701f598d10f247c421b6290361e36cb51ab3e5ec7c1c05811c0646d40bc"
+    },
+    {
+      "path": "agents/wf-plan-orchestrator.md",
+      "sha256": "ceaa060626fcf33c5f7ce9535e398ff070fa5636c538d8b33d6bcd4bbf651b86"
+    },
+    {
+      "path": "agents/wf-plan-scout.md",
+      "sha256": "cf8b1fe0be5ccd451875aaf2892ab3ac489cbe2a7d9a7fca85ad2f485112502e"
+    },
+    {
+      "path": "skills/wf-plan/SKILL.md",
+      "sha256": "9afcb04363642eee9197fa7d40513c28ed51b50a93623d07e78081d1559c48be"
+    },
+    {
+      "path": "skills/wf-plan/assets/plan.template.json",
+      "sha256": "1bb936225efe9b385bc5fb92d3a445811b1dab5cafe025601fa7c8a564b31714"
+    },
+    {
+      "path": "skills/wf-plan/references/plan-schema.md",
+      "sha256": "de287023896a3b679d4f09af8cdbbfbfc6f60bccf876303adcab5c9aec0ad9d7"
+    },
+    {
+      "path": "skills/wf-plan/references/wf-build-handoff.md",
+      "sha256": "b9282ce6d3876677939a3e279f2718b5c21c8d25becc53ae6031fc3f0fbaadae"
+    },
+    {
+      "path": "skills/wf-plan/scripts/guard_write.py",
+      "sha256": "bceaeafd3879d39bd8fb5ff1293e21737d9c5c1dcfc8db343527a92043c8e2d2"
+    },
+    {
+      "path": "skills/wf-plan/scripts/launch.ps1",
+      "sha256": "5f577262a6e20cadcf59ee11d875a79493d44f79bc2797fce813c1d6ea7445c2"
+    },
+    {
+      "path": "skills/wf-plan/scripts/launch.sh",
+      "sha256": "7728575da76f0c30348ed0f0b833219c9e66cd47f9127e3cbac8ec24980e0087"
+    },
+    {
+      "path": "skills/wf-plan/scripts/plan_core.py",
+      "sha256": "ce368dd0dc56f52655b4ababeb931eb209073e71c8ab251dbdd0a56130020006"
+    },
+    {
+      "path": "skills/wf-plan/scripts/wf_plan.py",
+      "sha256": "d7b69b20e6f32ea0fd7658f8351c5b4f4f409a650712dde91826ead6cfb0d399"
+    },
+    {
+      "path": "wf-plan/README.md",
+      "sha256": "b22c18857a9c3d29806d4578e8045ec33c84c4326bda255a815d0caae81fc38a"
+    },
+    {
+      "path": "wf-plan/workflow.json",
+      "sha256": "8861917610461fa5245a9eca260de3531a0696b8b876e73051346fd9dfe5115a"
+    }
+  ]
+}

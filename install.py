@@ -13,6 +13,9 @@ Safe by default:
     files and keeps a copy under <target>/backups/claude-code-workflows/<time>/.
   * settings.json and CLAUDE.md are merged, never replaced. The README.md block is regenerated.
   * Files left by older layouts of a workflow are retired (moved to backups) only when unmodified.
+  * A workflow that `replaces` an old one (workflow.json) retires the old install the same way: its unmodified
+    files, its record, its CLAUDE.md block and the hooks/env listed in `legacy_settings`. Edited files and the
+    old state/ folder are kept.
   * Uninstall removes only files that are unchanged since install, unless --force; state/ is kept.
 Standard library only (Python 3.8+).
 """
@@ -266,6 +269,91 @@ def merge_settings(name, target, args, remove=False):
         write_text(dst, json.dumps(new, indent=2) + "\n", target, args, ("unmerge" if remove else "merge") + " settings")
 
 
+def retire_file(target, dst, args):
+    """Back up and remove dst, then prune empty parent folders up to target."""
+    if args.dry_run:
+        return
+    backup(target, dst, args)
+    os.remove(dst)
+    d = os.path.dirname(dst)
+    while os.path.abspath(d) != os.path.abspath(target) and os.path.isdir(d) and not os.listdir(d):
+        os.rmdir(d)
+        d = os.path.dirname(d)
+
+
+def contained(target, rel):
+    """target path for rel, or None when rel is not a plain relative path that stays inside target."""
+    if not isinstance(rel, str) or not rel or "\\" in rel or ":" in rel or rel.startswith("/"):
+        return None
+    if any(part in ("", ".", "..") for part in rel.split("/")):
+        return None
+    dst = tpath(target, rel)
+    root = os.path.realpath(target)
+    try:
+        inside = os.path.commonpath([root, os.path.realpath(dst)]) == root
+    except ValueError:  # different drive on Windows
+        inside = False
+    return dst if inside else None
+
+
+def retire_replaced(name, meta, target, args):
+    """Retire the installed copy of each workflow this one replaces; returns the number of files retired."""
+    count = 0
+    for old in meta.get("replaces") or []:
+        man_path, rec_path = tpath(target, f"{old}/MANIFEST.json"), tpath(target, f"{old}/workflow.json")
+        if os.path.isfile(man_path) or os.path.isfile(rec_path):
+            log(f"  replacing old workflow {old}")
+        items, readable = [], True
+        if os.path.isfile(man_path):
+            try:
+                with open(man_path, encoding="utf-8") as f:
+                    items = json.load(f).get("files")
+                if not isinstance(items, list):
+                    raise ValueError("files is not a list")
+            except (OSError, ValueError, AttributeError):
+                items, readable = [], False
+                log(f"  note: {man_path} is unreadable; the old {old} files and records are left in place, review them by hand")
+        for item in items:
+            if not isinstance(item, dict) or item.get("shared"):
+                continue  # never the shared launcher
+            dst = contained(target, item.get("path"))
+            if dst is None:
+                log(f"  note: skipped an old {old} record entry that points outside {target}: {item.get('path')!r}")
+                continue
+            if not os.path.isfile(dst):
+                continue
+            if sha(dst) == item.get("sha256"):
+                log(f"  retire old workflow file (moved to backups): {dst}")
+                retire_file(target, dst, args)
+                count += 1
+            else:
+                log(f"  note: {dst} belongs to the old {old} workflow but was modified; left in place, review it by hand")
+        for rec in (rec_path, man_path):  # the records go even if edited, so the old workflow is no longer listed
+            if readable and os.path.isfile(rec):
+                log(f"  remove old record (moved to backups): {rec}")
+                retire_file(target, rec, args)
+        merge_contract(old, target, args, remove=True)
+        if os.path.isdir(tpath(target, old)):
+            log(f"  kept: {tpath(target, old)} (old state; delete it yourself if you do not need it)")
+    legacy = meta.get("legacy_settings") or {}
+    cmds, env = set(legacy.get("hooks", [])), legacy.get("env", {})
+    dst = os.path.join(target, "settings.json")
+    cur = read_settings(dst)
+    new = json.loads(json.dumps(cur))
+    for event in list(new.get("hooks", {})):
+        kept = [e for e in new["hooks"][event] if not any(h.get("command") in cmds for h in e.get("hooks", []))]
+        if kept:
+            new["hooks"][event] = kept
+        else:
+            del new["hooks"][event]
+    for k, v in env.items():
+        if new.get("env", {}).get(k) == v:
+            del new["env"][k]
+    if new != cur:
+        write_text(dst, json.dumps(new, indent=2) + "\n", target, args, "remove old workflow hooks and env from settings in")
+    return count
+
+
 def readme_block(target, names):
     rows = []
     for n in names:
@@ -415,13 +503,8 @@ def install(name, target, args):
             os.unlink(p) if os.path.islink(p) else os.rmdir(p)
     for dst in retire:
         log(f"  retire old-layout file (moved to backups): {dst}")
-        if not args.dry_run:
-            backup(target, dst, args)
-            os.remove(dst)
-            d = os.path.dirname(dst)
-            while os.path.abspath(d) != os.path.abspath(target) and os.path.isdir(d) and not os.listdir(d):
-                os.rmdir(d)
-                d = os.path.dirname(d)
+        retire_file(target, dst, args)
+    replaced = retire_replaced(name, meta, target, args)
     for src, dst in adds + overwrites:
         log(f"  {'add' if (src, dst) in adds else 'overwrite (copy kept in backups)'}: {dst}")
         if not args.dry_run:
@@ -439,7 +522,7 @@ def install(name, target, args):
         update_readme(target, args)
     else:
         log(f"  update workflows overview in: {os.path.join(target, 'README.md')}")
-    log(f"files: {len(adds)} added, {len(overwrites)} overwritten, {unchanged} unchanged, {len(retire)} retired")
+    log(f"files: {len(adds)} added, {len(overwrites)} overwritten, {unchanged} unchanged, {len(retire) + replaced} retired")
     log(f"Start it with: claude --workflow {name}   (restart Claude Code first if it is running)")
     return True
 

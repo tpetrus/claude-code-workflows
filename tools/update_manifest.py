@@ -2,7 +2,7 @@
 """Regenerate workflows/<name>/MANIFEST.json for every workflow (or the ones named).
 
     python3 tools/update_manifest.py                 all workflows
-    python3 tools/update_manifest.py double-diamond  one workflow
+    python3 tools/update_manifest.py wf-plan  one workflow
 
 The manifest lists every file install.py copies (target-relative path and SHA-256) plus the version from
 workflow.json. install.py refuses a payload that does not match it, and uninstall uses it to remove only
