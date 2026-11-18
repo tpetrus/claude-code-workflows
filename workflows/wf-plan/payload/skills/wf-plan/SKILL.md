@@ -4,7 +4,7 @@ description: "Plan a feature before building it: triage, ask only real decisions
 compatibility: "Claude Code. Python 3.9+ (python3 on PATH) for scripts/wf_plan.py. Needs AskUserQuestion (main session only). Worker agents wf-plan-scout, wf-plan-ideator, wf-plan-critic. Optional wf-build skill for hand-off."
 metadata:
   version: "2.1.1"
-  family: diamond-workflows
+  family: claude-code-workflows
 ---
 
 # wf-plan feature planning

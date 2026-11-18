@@ -187,7 +187,7 @@ Exit codes: 0 success; 1 gate fail, rejected, refused, not verified or canary fa
   - `wf-plan-critic`: `model: sonnet`, `effort: high`, `maxTurns: 20`, mode `critic` (a different model from the lead, so the blind spots differ).
 
 ## 13. Skill and docs
-- **SKILL.md frontmatter**: `name: wf-plan`; description of at most 200 characters; `compatibility`; `metadata` with `version: "2.1.1"` and `family: diamond-workflows`. Never `disable-model-invocation` (it would block the planner's `skills:` preload).
+- **SKILL.md frontmatter**: `name: wf-plan`; description of at most 200 characters; `compatibility`; `metadata` with `version: "2.1.1"` and `family: claude-code-workflows`. Never `disable-model-invocation` (it would block the planner's `skills:` preload).
 - **SKILL.md body**:
   - fewer than 500 lines (target about 170);
   - contains `at most **4 questions per round**`, `at most **3 rounds**` and `up to 3 attempts`;
