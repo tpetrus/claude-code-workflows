@@ -325,7 +325,7 @@ wf-plan and wf-build replace the old planning and build workflows.
 - Run `python3 install.py --all`. It retires the old installs automatically. Their state folders are kept
   in `~/.claude/` and can be deleted.
 - Plans exported by the old planning workflow no longer verify. Re-plan them with wf-plan.
-- In other repositories whose `CLAUDE.md` has the old key (now `wf_build:`), rename the key to `wf_build:`.
+- In other repositories whose `CLAUDE.md` still has the old command-contract key, rename it to `wf_build:`.
 - Old runs in the temp folder are not carried over.
 
 ## Repository layout
