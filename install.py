@@ -281,6 +281,21 @@ def retire_file(target, dst, args):
         d = os.path.dirname(d)
 
 
+def contained(target, rel):
+    """target path for rel, or None when rel is not a plain relative path that stays inside target."""
+    if not isinstance(rel, str) or not rel or "\\" in rel or ":" in rel or rel.startswith("/"):
+        return None
+    if any(part in ("", ".", "..") for part in rel.split("/")):
+        return None
+    dst = tpath(target, rel)
+    root = os.path.realpath(target)
+    try:
+        inside = os.path.commonpath([root, os.path.realpath(dst)]) == root
+    except ValueError:  # different drive on Windows
+        inside = False
+    return dst if inside else None
+
+
 def retire_replaced(name, meta, target, args):
     """Retire the installed copy of each workflow this one replaces; returns the number of files retired."""
     count = 0
@@ -288,18 +303,23 @@ def retire_replaced(name, meta, target, args):
         man_path, rec_path = tpath(target, f"{old}/MANIFEST.json"), tpath(target, f"{old}/workflow.json")
         if os.path.isfile(man_path) or os.path.isfile(rec_path):
             log(f"  replacing old workflow {old}")
-        items = []
+        items, readable = [], True
         if os.path.isfile(man_path):
             try:
                 with open(man_path, encoding="utf-8") as f:
-                    items = json.load(f).get("files", [])
+                    items = json.load(f).get("files")
+                if not isinstance(items, list):
+                    raise ValueError("files is not a list")
             except (OSError, ValueError, AttributeError):
-                log(f"  note: {man_path} is unreadable; its files are left in place")
+                items, readable = [], False
+                log(f"  note: {man_path} is unreadable; the old {old} files and records are left in place, review them by hand")
         for item in items:
-            rel = item.get("path") if isinstance(item, dict) else None
-            if not isinstance(rel, str) or item.get("shared") or rel.startswith(("/", "..")) or "/../" in rel:
-                continue  # never the shared launcher, never a path outside the config dir
-            dst = tpath(target, rel)
+            if not isinstance(item, dict) or item.get("shared"):
+                continue  # never the shared launcher
+            dst = contained(target, item.get("path"))
+            if dst is None:
+                log(f"  note: skipped an old {old} record entry that points outside {target}: {item.get('path')!r}")
+                continue
             if not os.path.isfile(dst):
                 continue
             if sha(dst) == item.get("sha256"):
@@ -309,7 +329,7 @@ def retire_replaced(name, meta, target, args):
             else:
                 log(f"  note: {dst} belongs to the old {old} workflow but was modified; left in place, review it by hand")
         for rec in (rec_path, man_path):  # the records go even if edited, so the old workflow is no longer listed
-            if os.path.isfile(rec):
+            if readable and os.path.isfile(rec):
                 log(f"  remove old record (moved to backups): {rec}")
                 retire_file(target, rec, args)
         merge_contract(old, target, args, remove=True)

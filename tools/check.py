@@ -526,6 +526,10 @@ def migration_check(names):
             put(edited[old], "user edited this\n")
             files.append({"path": edited[old], "sha256": sha(b"original\n")})
             files.append({"path": install.LAUNCHER_REL, "sha256": sha(launcher.encode()), "shared": True})
+            # Hostile record entries pointing outside the config dir (with the victim's real digest) must be ignored.
+            files += [{"path": p, "sha256": sha(b"victim\n")} for p in
+                      ("../outside/victim.txt", "x/..\\..\\outside\\victim.txt", "\\outside\\victim.txt", "x/../../outside/victim.txt",
+                       os.path.join(tmp, "outside", "victim.txt").replace("\\", "/"))]
             put(install.LAUNCHER_REL, launcher)
             put(f"{old}/workflow.json", json.dumps({"name": old, "version": "1.0.0", "summary": "old", "usage": []}))
             put(f"{old}/MANIFEST.json", json.dumps({"name": old, "version": "1.0.0", "files": files}))
@@ -533,6 +537,10 @@ def migration_check(names):
             claude_md += f"\n<!-- BEGIN {old} -->\nold contract\n<!-- END {old} -->\n"
         put("CLAUDE.md", claude_md)
         put("settings.json", json.dumps(settings, indent=2) + "\n")
+        victim = os.path.join(tmp, "outside", "victim.txt")
+        os.makedirs(os.path.dirname(victim))
+        with open(victim, "w", encoding="utf-8", newline="\n") as f:
+            f.write("victim\n")
 
         def snapshot():
             return {os.path.relpath(os.path.join(b, f), target): sha(open(os.path.join(b, f), "rb").read())
@@ -589,6 +597,20 @@ def migration_check(names):
             for _, rel in install.install_map(n):
                 if not os.path.isfile(os.path.join(target, *rel.split("/"))):
                     fail("roundtrip", f"migration: new file {rel} is missing")
+        if not os.path.isfile(victim):
+            fail("roundtrip", "migration: a record entry outside the config dir deleted a file")
+
+        # An unreadable old record never crashes the install and is kept, so a later install can retry.
+        target2 = os.path.join(tmp, "unreadable", ".claude")
+        old = old_names[0]
+        for rec, text in (("workflow.json", "{}"), ("MANIFEST.json", '{"files": null}')):
+            os.makedirs(os.path.join(target2, old), exist_ok=True)
+            with open(os.path.join(target2, old, rec), "w", encoding="utf-8") as f:
+                f.write(text)
+        p = subprocess.run([sys.executable, "-B", os.path.join(REPO, "install.py"), *names, "--target", target2],
+                           capture_output=True, text=True, encoding="utf-8")
+        if p.returncode != 0 or not os.path.isfile(os.path.join(target2, old, "MANIFEST.json")):
+            fail("roundtrip", f"migration: an unreadable old record crashed the install or was removed:\n{p.stdout}{p.stderr}")
 
 
 def roundtrip(names):
